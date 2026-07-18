@@ -1,74 +1,40 @@
-import type { Appointment, Client, Professional, Service } from "@/lib/types";
-import { hourMarks, minutesToLabel, AGENDA_START_MIN, AGENDA_END_MIN } from "@/lib/agenda/time";
-import { AppointmentBlock } from "./AppointmentBlock";
+import type { Appointment, Client, Service } from "@/lib/types";
+import { blockPosition, timeLabel } from "@/lib/agenda/time";
 
-export function AgendaGrid({
-  professionals,
-  appointments,
-  clients,
+const STATUS_STYLE: Record<Appointment["status"], string> = {
+  scheduled: "bg-ink-800 border-ink-600 text-paper-50",
+  checked_in: "bg-signal-500/15 border-signal-500/60 text-signal-400",
+  in_progress: "bg-signal-500/25 border-signal-500 text-paper-50",
+  completed: "bg-ink-800/60 border-ink-700 text-paper-500",
+  no_show: "bg-danger/10 border-danger/40 text-danger",
+  cancelled: "bg-ink-900 border-ink-800 text-paper-500 line-through",
+};
+
+export function AppointmentBlock({
+  appointment,
+  client,
   services,
 }: {
-  professionals: Professional[];
-  appointments: Appointment[];
-  clients: Client[];
+  appointment: Appointment;
+  client?: Pick<Client, "name">;
   services: Service[];
 }) {
-  const marks = hourMarks();
-  const rowCount = marks.length - 1;
+  const { top, height } = blockPosition(appointment.startAt, appointment.endAt);
+  const serviceNames = services
+    .filter((s) => appointment.serviceIds.includes(s.id))
+    .map((s) => s.name)
+    .join(" + ");
 
   return (
-    <div className="ping-card overflow-hidden">
-      {/* Cabeçalho: um profissional por coluna, como no Google Calendar */}
-      <div
-        className="grid border-b border-ink-800"
-        style={{ gridTemplateColumns: `56px repeat(${professionals.length}, 1fr)` }}
-      >
-        <div />
-        {professionals.map((p) => (
-          <div key={p.id} className="px-3 py-3 text-center border-l border-ink-800">
-            <p className="text-sm font-semibold truncate">{p.name}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Corpo: régua de horas + colunas com blocos posicionados em absoluto */}
-      <div
-        className="grid relative"
-        style={{ gridTemplateColumns: `56px repeat(${professionals.length}, 1fr)` }}
-      >
-        <div className="relative">
-          {marks.slice(0, -1).map((m) => (
-            <div
-              key={m}
-              className="h-16 text-[11px] text-paper-500 text-right pr-2 -translate-y-2"
-            >
-              {minutesToLabel(m)}
-            </div>
-          ))}
-        </div>
-
-        {professionals.map((prof) => (
-          <div key={prof.id} className="relative border-l border-ink-800">
-            {/* linhas horizontais de hora, puramente decorativas */}
-            {Array.from({ length: rowCount }).map((_, i) => (
-              <div key={i} className="h-16 border-b border-ink-800/60" />
-            ))}
-
-            <div className="absolute inset-0">
-              {appointments
-                .filter((a) => a.professionalId === prof.id)
-                .map((a) => (
-                  <AppointmentBlock
-                    key={a.id}
-                    appointment={a}
-                    client={clients.find((c) => c.id === a.clientId)}
-                    services={services}
-                  />
-                ))}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div
+      className={`absolute left-1 right-1 rounded-xs border px-2 py-1.5 overflow-hidden ${STATUS_STYLE[appointment.status]}`}
+      style={{ top, height }}
+      title={`${serviceNames} · ${client?.name ?? "Cliente"}`}
+    >
+      <p className="text-[11px] font-semibold leading-tight truncate">
+        {timeLabel(appointment.startAt)} · {client?.name ?? "Cliente"}
+      </p>
+      <p className="text-[11px] leading-tight truncate opacity-80">{serviceNames}</p>
     </div>
   );
 }
