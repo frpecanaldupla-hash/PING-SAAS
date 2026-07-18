@@ -49,8 +49,10 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-ink-950 px-6">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <PingMark size={72} />
-          <h1 className="font-display text-4xl tracking-wide mt-2">PING</h1>
+          <Link href="/" className="flex flex-col items-center">
+            <PingMark size={72} />
+            <h1 className="font-display text-4xl tracking-wide mt-2">PING</h1>
+          </Link>
           <p className="text-paper-500 text-sm mt-1">Entre para continuar</p>
         </div>
 
