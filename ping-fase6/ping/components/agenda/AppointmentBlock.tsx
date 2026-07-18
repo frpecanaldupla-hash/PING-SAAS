@@ -16,7 +16,7 @@ export function AppointmentBlock({
   services,
 }: {
   appointment: Appointment;
-  client?: Client;
+  client?: Pick<Client, "name">;
   services: Service[];
 }) {
   const { top, height } = blockPosition(appointment.startAt, appointment.endAt);
