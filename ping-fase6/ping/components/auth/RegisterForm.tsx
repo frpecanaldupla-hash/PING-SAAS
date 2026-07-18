@@ -48,7 +48,15 @@ export function RegisterForm() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { business_name: businessName } },
+      options: {
+        data: { business_name: businessName },
+        // Sem isso, o Supabase manda o link padrão dele (ConfirmationURL),
+        // que verifica o token assim que qualquer requisição bate nele —
+        // inclusive o pré-carregamento de segurança do Gmail/Outlook. Ver
+        // app/auth/confirm/route.ts para o porquê disso resolver o
+        // "Email link is invalid or has expired".
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard`,
+      },
     });
 
     if (signUpError) {
@@ -87,7 +95,9 @@ export function RegisterForm() {
       <div className="min-h-screen flex items-center justify-center bg-ink-950 px-6">
         <div className="w-full max-w-sm text-center">
           <div className="flex justify-center">
-            <PingMark size={72} />
+            <Link href="/">
+              <PingMark size={72} />
+            </Link>
           </div>
           <h1 className="font-display text-3xl tracking-wide mt-4 mb-2">Quase lá</h1>
           <p className="text-paper-400 text-sm leading-relaxed">
@@ -110,8 +120,10 @@ export function RegisterForm() {
     <div className="min-h-screen flex items-center justify-center bg-ink-950 px-6">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <PingMark size={72} />
-          <h1 className="font-display text-4xl tracking-wide mt-2">PING</h1>
+          <Link href="/" className="flex flex-col items-center">
+            <PingMark size={72} />
+            <h1 className="font-display text-4xl tracking-wide mt-2">PING</h1>
+          </Link>
           <p className="text-paper-500 text-sm mt-1">Crie a conta do seu negócio</p>
         </div>
 
