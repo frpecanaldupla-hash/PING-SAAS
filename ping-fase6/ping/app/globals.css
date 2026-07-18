@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-ink-950 text-paper-50 font-body antialiased;
+  }
+
+  ::selection {
+    @apply bg-signal-500/30 text-paper-50;
+  }
+
+  /* Foco visível — nunca removido, só restilizado */
+  :focus-visible {
+    outline: 2px solid theme("colors.signal.500");
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Cartão base usado em toda a interface */
+  .ping-card {
+    @apply bg-ink-900 border border-ink-700 rounded-lg shadow-card;
+  }
+
+  /* Selo numérico usado em avisos de pontos/valores — mono para alinhamento tabular */
+  .ping-figure {
+    @apply font-mono tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
