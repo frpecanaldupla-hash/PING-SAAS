@@ -19,7 +19,7 @@ export default function LandingPage() {
               Entrar
             </Link>
             <Link
-              href="/login"
+              href="/cadastro"
               className="px-5 py-2.5 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold text-sm rounded-sm transition-colors"
             >
               Testar grátis
@@ -44,7 +44,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link
-              href="/login"
+              href="/cadastro"
               className="inline-flex items-center gap-2 bg-signal-500 hover:bg-signal-400 text-ink-950 px-7 py-4 rounded-sm text-base font-semibold transition-colors"
             >
               Experimentar agora
