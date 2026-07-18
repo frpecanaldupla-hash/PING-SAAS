@@ -11,15 +11,17 @@ export default function LandingPage() {
       <header className="border-b border-ink-800">
         <div className="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-signal-500 shadow-ping" />
-            <span className="font-display text-2xl tracking-wide">PING</span>
+            <Link href="/" className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-signal-500 shadow-ping" />
+              <span className="font-display text-2xl tracking-wide">PING</span>
+            </Link>
           </div>
           <div className="flex items-center gap-6">
             <Link href="/login" className="text-sm text-paper-400 hover:text-paper-50 transition-colors">
               Entrar
             </Link>
             <Link
-              href="/cadastro"
+              href="/login"
               className="px-5 py-2.5 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold text-sm rounded-sm transition-colors"
             >
               Testar grátis
@@ -44,7 +46,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link
-              href="/cadastro"
+              href="/login"
               className="inline-flex items-center gap-2 bg-signal-500 hover:bg-signal-400 text-ink-950 px-7 py-4 rounded-sm text-base font-semibold transition-colors"
             >
               Experimentar agora
