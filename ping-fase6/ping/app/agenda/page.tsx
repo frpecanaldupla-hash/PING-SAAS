@@ -43,8 +43,7 @@ export default async function AgendaPage({
         .from("professionals")
         .select("id, business_id, user_id, name, avatar_url, role, active, commission_percent")
         .eq("business_id", business.id)
-        .eq("active", true)
-        .order("created_at", { ascending: true }),
+        .eq("active", true),
       supabase
         .from("services")
         .select("id, business_id, name, price, duration_minutes, is_combo, combo_service_ids, active")
