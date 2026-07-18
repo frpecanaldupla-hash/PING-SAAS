@@ -13,6 +13,11 @@ import { getCurrentBusiness } from "@/lib/supabase/business";
 import { todayRevenue, activeClientsCount, returnRate } from "@/lib/mock/metrics";
 import type { Client, Transaction } from "@/lib/types";
 
+// O dashboard só busca os campos que as métricas precisam (não o registro
+// completo de Client/Transaction) — ver lib/mock/metrics.ts.
+type ClientMetric = Pick<Client, "totalVisits">;
+type TransactionMetric = Pick<Transaction, "amount" | "type">;
+
 // Hub pós-login. Antes mostrava "Barbearia Central" e métricas fixas pra
 // qualquer conta — agora busca o negócio de quem está logado e mostra os
 // números reais dele (que começam em zero, o que é correto: uma conta nova
@@ -28,8 +33,8 @@ export default async function DashboardPage() {
   });
   const todayCapitalized = today.charAt(0).toUpperCase() + today.slice(1);
 
-  let clients: Client[] = [];
-  let transactions: Transaction[] = [];
+  let clients: ClientMetric[] = [];
+  let transactions: TransactionMetric[] = [];
 
   if (business) {
     const [{ data: clientRows }, { data: txRows }] = await Promise.all([
@@ -41,8 +46,8 @@ export default async function DashboardPage() {
         .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
     ]);
 
-    clients = (clientRows ?? []).map((c) => ({ totalVisits: c.total_visits }) as Client);
-    transactions = (txRows ?? []).map((t) => ({ amount: t.amount, type: t.type }) as Transaction);
+    clients = (clientRows ?? []).map((c) => ({ totalVisits: c.total_visits }));
+    transactions = (txRows ?? []).map((t) => ({ amount: t.amount, type: t.type }));
   }
 
   const revenue = todayRevenue(transactions);
