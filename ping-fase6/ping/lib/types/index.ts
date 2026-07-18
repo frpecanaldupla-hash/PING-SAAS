@@ -25,6 +25,7 @@ export interface Service {
 export interface Professional {
   id: string;
   businessId: string;
+  userId: string | null;
   name: string;
   avatarUrl: string | null;
   role: Role;
