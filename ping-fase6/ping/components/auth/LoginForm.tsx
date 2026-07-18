@@ -35,10 +35,15 @@ export function LoginForm() {
     // chamar a função de criação). No primeiro login com sucesso, criamos
     // o negócio agora, usando o nome guardado em user_metadata no cadastro.
     // A função é idempotente — se o negócio já existe, só retorna o id dele.
-    const businessName =
-      (data.user?.user_metadata as { business_name?: string } | undefined)
-        ?.business_name || "Meu negócio";
-    await supabase.rpc("create_business_and_owner", { business_name: businessName });
+    const metadata = data.user?.user_metadata as
+      | { business_name?: string; owner_name?: string }
+      | undefined;
+    const businessName = metadata?.business_name || "Meu negócio";
+    const ownerName = metadata?.owner_name || "";
+    await supabase.rpc("create_business_and_owner", {
+      business_name: businessName,
+      owner_name: ownerName,
+    });
 
     setLoading(false);
     router.push("/dashboard");
