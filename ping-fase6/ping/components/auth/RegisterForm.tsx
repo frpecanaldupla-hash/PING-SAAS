@@ -22,6 +22,7 @@ import { PingMark } from "@/components/shared/PingMark";
 export function RegisterForm() {
   const router = useRouter();
   const [businessName, setBusinessName] = useState("");
+  const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,7 +50,7 @@ export function RegisterForm() {
       email,
       password,
       options: {
-        data: { business_name: businessName },
+        data: { business_name: businessName, owner_name: ownerName },
         // Sem isso, o Supabase manda o link padrão dele (ConfirmationURL),
         // que verifica o token assim que qualquer requisição bate nele —
         // inclusive o pré-carregamento de segurança do Gmail/Outlook. Ver
@@ -73,6 +74,7 @@ export function RegisterForm() {
     if (data.session) {
       const { error: rpcError } = await supabase.rpc("create_business_and_owner", {
         business_name: businessName,
+        owner_name: ownerName,
       });
       setLoading(false);
       if (rpcError) {
@@ -141,6 +143,24 @@ export function RegisterForm() {
               className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="Ex: Barbearia Central"
             />
+          </div>
+
+          <div>
+            <label htmlFor="ownerName" className="text-xs text-paper-500 mb-1.5 block">
+              Seu nome
+            </label>
+            <input
+              id="ownerName"
+              type="text"
+              required
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
+              placeholder="Ex: Zé"
+            />
+            <p className="text-[11px] text-paper-500 mt-1.5">
+              É assim que você vai aparecer na Agenda como profissional. Dá pra editar depois.
+            </p>
           </div>
 
           <div>
