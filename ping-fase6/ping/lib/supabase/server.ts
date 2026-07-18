@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 // Usado em Server Components, Server Actions e Route Handlers.
@@ -14,16 +14,16 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Chamado de um Server Component sem permissão de escrita — ok,
-            // o middleware cuida de renovar a sessão nesse caso.
-          }
-        },
+setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+  try {
+    cookiesToSet.forEach(({ name, value, options }) =>
+      cookieStore.set(name, value, options)
+    );
+  } catch {
+    // Chamado de um Server Component sem permissão de escrita — ok,
+    // o middleware cuida de renovar a sessão nesse caso.
+  }
+},
       },
     }
   );
