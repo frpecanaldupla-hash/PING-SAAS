@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { TeamManager } from "@/components/rh/TeamManager";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
+import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
 import type { Appointment, Professional } from "@/lib/types";
 
 // Substitui MOCK_PROFESSIONALS / MOCK_APPOINTMENTS pelo negócio de quem
@@ -27,8 +28,7 @@ export default async function RhPage() {
     );
   }
 
-  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-  const startOfTomorrow = new Date(new Date().setHours(24, 0, 0, 0)).toISOString();
+  const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO();
 
   const [{ data: profRows }, { data: apptRows }] = await Promise.all([
     supabase
