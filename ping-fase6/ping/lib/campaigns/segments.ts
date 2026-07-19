@@ -1,4 +1,5 @@
 import type { Client, FidelityConfig, Campaign } from "@/lib/types";
+import { todayDateOnlyBrasilia } from "@/lib/time/brasilia";
 
 // TODO(fase seguinte): trocar a geração de mensagem por uma chamada real à
 // API da Anthropic (`/v1/messages`) recebendo o segmento e o histórico do
@@ -15,11 +16,15 @@ export function inactiveClients(clients: Client[], days = 30) {
 }
 
 export function birthdayClients(clients: Client[]) {
-  const today = new Date();
+  const today = todayDateOnlyBrasilia();
   return clients.filter((c) => {
     if (!c.birthday) return false;
+    // `c.birthday` é uma data-only ("1990-07-19"), que o JS sempre
+    // interpreta como meia-noite UTC — por isso lemos com getUTCMonth/
+    // getUTCDate, não getMonth/getDate, senão o fuso do navegador desloca
+    // o dia. `today` já veio pronta com os componentes certos de Brasília.
     const b = new Date(c.birthday);
-    return b.getMonth() === today.getMonth() && b.getDate() === today.getDate();
+    return b.getUTCMonth() === today.getMonth() && b.getUTCDate() === today.getDate();
   });
 }
 
