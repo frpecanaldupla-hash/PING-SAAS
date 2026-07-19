@@ -4,6 +4,7 @@ import { AgendaGrid } from "@/components/agenda/AgendaGrid";
 import { BookingDrawer } from "@/components/agenda/BookingDrawer";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
+import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
 import type { Appointment, Client, Professional, Service } from "@/lib/types";
 
 // Substitui os MOCK_* pelo negócio de quem está logado. Uma conta nova
@@ -34,8 +35,7 @@ export default async function AgendaPage({
     );
   }
 
-  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-  const startOfTomorrow = new Date(new Date().setHours(24, 0, 0, 0)).toISOString();
+  const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO();
 
   const [{ data: profRows }, { data: serviceRows }, { data: apptRows }, { data: clientRows }] =
     await Promise.all([
