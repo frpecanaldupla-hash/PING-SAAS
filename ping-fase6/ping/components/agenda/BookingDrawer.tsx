@@ -4,11 +4,15 @@ import { useEffect, useState, useTransition } from "react";
 import { X, ArrowLeft, Plus, CheckCircle2, Search, UserPlus } from "lucide-react";
 import type { Service, Professional, Appointment } from "@/lib/types";
 import { createAppointment, searchClients } from "@/app/agenda/actions";
+import { generateSlotLabels, slotFitsBeforeClosing } from "@/lib/agenda/time";
 
 type Step = "service" | "time" | "client" | "confirm" | "done";
 type FoundClient = { id: string; name: string; phone: string };
 
-const TIME_SLOTS = ["09:00", "09:40", "10:30", "11:10", "14:00", "15:00", "16:30", "17:20"];
+// Gerado a partir de AGENDA_START_MIN/AGENDA_END_MIN (lib/agenda/time.ts) —
+// hoje é 07:00–23:00 de meia em meia hora. Mudar o horário de
+// funcionamento do negócio é mudar só lá, não aqui.
+const TIME_SLOTS = generateSlotLabels(30);
 
 function timeSlotToISO(slot: string) {
   const [h, m] = slot.split(":").map(Number);
@@ -229,8 +233,10 @@ export function BookingDrawer({
                     2 de 4 · Escolha o horário com {professional.name}
                   </p>
                   {(() => {
-                    const freeSlots = TIME_SLOTS.filter((t) =>
-                      isSlotFree(t, service.durationMinutes, professional.id, appointments)
+                    const freeSlots = TIME_SLOTS.filter(
+                      (t) =>
+                        slotFitsBeforeClosing(t, service.durationMinutes) &&
+                        isSlotFree(t, service.durationMinutes, professional.id, appointments)
                     );
                     if (freeSlots.length === 0) {
                       return (
@@ -241,7 +247,7 @@ export function BookingDrawer({
                       );
                     }
                     return (
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         {freeSlots.map((t) => (
                           <button
                             key={t}
@@ -249,7 +255,7 @@ export function BookingDrawer({
                               setTime(t);
                               setStep("client");
                             }}
-                            className="py-3 rounded-sm border border-ink-700 text-sm hover:bg-signal-500 hover:border-signal-500 hover:text-ink-950 transition-colors"
+                            className="py-2.5 rounded-sm border border-ink-700 text-sm hover:bg-signal-500 hover:border-signal-500 hover:text-ink-950 transition-colors"
                           >
                             {t}
                           </button>
