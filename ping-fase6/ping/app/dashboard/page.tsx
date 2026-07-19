@@ -11,6 +11,7 @@ import { PingMark } from "@/components/shared/PingMark";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { todayRevenue, activeClientsCount, returnRate } from "@/lib/mock/metrics";
+import { brasiliaDayRangeISO, todayLabelBrasilia } from "@/lib/time/brasilia";
 import type { Client, Transaction } from "@/lib/types";
 
 // O dashboard só busca os campos que as métricas precisam (não o registro
@@ -28,9 +29,7 @@ export default async function DashboardPage() {
   const businessName = business?.name ?? "Seu negócio";
   const initials = businessName.slice(0, 2).toUpperCase();
 
-  const today = new Date().toLocaleDateString("pt-BR", {
-    weekday: "long", day: "numeric", month: "long",
-  });
+  const today = todayLabelBrasilia();
   const todayCapitalized = today.charAt(0).toUpperCase() + today.slice(1);
 
   let clients: ClientMetric[] = [];
@@ -43,7 +42,7 @@ export default async function DashboardPage() {
         .from("transactions")
         .select("amount, type, created_at")
         .eq("business_id", business.id)
-        .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
+        .gte("created_at", brasiliaDayRangeISO().startOfToday),
     ]);
 
     clients = (clientRows ?? []).map((c) => ({ totalVisits: c.total_visits }));
