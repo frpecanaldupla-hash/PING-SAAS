@@ -155,10 +155,12 @@ export async function createAppointment(input: {
   return { error: null };
 }
 
-// Chamada pelo drag-and-drop da AgendaGrid ao soltar um bloco em outro
-// horário e/ou outro profissional. Mesma trava de conflito do
-// createAppointment, mas excluindo o próprio agendamento da checagem
-// (senão ele sempre "colidiria" consigo mesmo).
+// Move um agendamento existente pra outro horário e/ou outro profissional —
+// usado pelo drag-and-drop da Agenda. Reaproveita a mesma checagem de
+// conflito de createAppointment, só excluindo o próprio agendamento da
+// comparação (senão ele sempre "colidiria com si mesmo"). A duração
+// original é preservada: quem chama manda o novo startAt/endAt já com a
+// duração do serviço aplicada (ver AgendaGrid.tsx).
 export async function moveAppointment(input: {
   id: string;
   professionalId: string;
@@ -174,8 +176,8 @@ export async function moveAppointment(input: {
     .select("id")
     .eq("business_id", business.id)
     .eq("professional_id", input.professionalId)
-    .neq("status", "cancelled")
     .neq("id", input.id)
+    .neq("status", "cancelled")
     .lt("start_at", input.endAt)
     .gt("end_at", input.startAt);
 
