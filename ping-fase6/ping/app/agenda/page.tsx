@@ -114,6 +114,7 @@ export default async function AgendaPage({
           <BookingDrawer
             services={services}
             professionals={professionals}
+            appointments={appointments}
             autoOpen={novo === "1"}
           />
         )}
