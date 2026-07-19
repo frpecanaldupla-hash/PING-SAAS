@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, LogOut, Clock, Star } from "lucide-react";
+import { Calendar, LogOut, Clock } from "lucide-react";
 import { ClientQr } from "@/components/cliente/ClientQr";
 import { fidelityProgress } from "@/lib/fidelity/points";
 import { getSessionClientId } from "@/lib/client-portal/session";
@@ -16,7 +16,7 @@ export default async function ClientePage() {
   const { data: client } = await supabase
     .from("clients")
     .select(`
-      id, name, qr_token, points, business_id, notes,
+      id, name, qr_token, points, notes,
       businesses ( name ),
       appointments (
         id, start_at, end_at, status, total_price,
@@ -31,13 +31,19 @@ export default async function ClientePage() {
   const business = Array.isArray(client.businesses) ? client.businesses[0] : client.businesses;
   const businessName = (business as { name?: string } | null)?.name ?? "PING";
 
-  const fidelityConfig = { /* ... mesmo de antes */ };
+  const fidelityConfig = {
+    businessId: client.business_id,
+    pointsPerReal: 1,
+    pointsPerVisit: 1,
+    rewardThreshold: 10,
+    rewardValue: 40,
+  };
+
   const { remaining, percent, canRedeem } = fidelityProgress(client.points, fidelityConfig);
 
-  // Últimos agendamentos (ordenados do mais recente)
   const lastAppointments = client.appointments
-    ?.filter(a => a.status === "completed")
-    .sort((a, b) => new Date(b.start_at).getTime() - new Date(a.start_at).getTime())
+    ?.filter((a: any) => a.status === "completed")
+    .sort((a: any, b: any) => new Date(b.start_at).getTime() - new Date(a.start_at).getTime())
     .slice(0, 5) || [];
 
   return (
@@ -55,7 +61,6 @@ export default async function ClientePage() {
       </header>
 
       <main className="px-5 lg:px-10 py-8 max-w-md mx-auto space-y-8">
-        {/* QR Code */}
         <div className="ping-card p-8 text-center">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">SEU QR CODE</p>
           <ClientQr token={client.qr_token} />
@@ -63,7 +68,6 @@ export default async function ClientePage() {
           <p className="text-xs text-paper-500 mt-1">Mostre este QR na barbearia para fazer check-in rápido</p>
         </div>
 
-        {/* Fidelidade */}
         <div className="ping-card p-6">
           <div className="flex items-baseline justify-between mb-4">
             <p className="text-xs uppercase tracking-wide text-paper-500">FIDELIDADE</p>
@@ -81,7 +85,6 @@ export default async function ClientePage() {
           </p>
         </div>
 
-        {/* Observações do cliente */}
         {client.notes && (
           <div className="ping-card p-6">
             <p className="text-xs uppercase tracking-wide text-paper-500 mb-2">Observações</p>
@@ -89,12 +92,10 @@ export default async function ClientePage() {
           </div>
         )}
 
-        {/* Últimos Agendamentos */}
         <div className="ping-card p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4 flex items-center gap-2">
             <Clock size={14} /> Últimos cortes
           </p>
-          
           {lastAppointments.length === 0 ? (
             <p className="text-sm text-paper-500 text-center py-8">Ainda não tem cortes registrados.</p>
           ) : (
@@ -102,9 +103,11 @@ export default async function ClientePage() {
               {lastAppointments.map((a: any) => (
                 <div key={a.id} className="flex justify-between items-center py-2 border-b border-ink-700 last:border-0">
                   <div>
-                    <p className="font-medium text-sm">{a.services?.map((s: any) => s.name).join(" + ")}</p>
+                    <p className="font-medium text-sm">
+                      {a.services?.map((s: any) => s.name).join(" + ") || "Serviço"}
+                    </p>
                     <p className="text-xs text-paper-500">
-                      {new Date(a.start_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                      {new Date(a.start_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                   <div className="text-right">
@@ -118,7 +121,6 @@ export default async function ClientePage() {
           )}
         </div>
 
-        {/* Botão principal */}
         <Link
           href="/agenda?novo=1"
           className="block text-center py-4 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold rounded-sm transition-colors text-lg"
