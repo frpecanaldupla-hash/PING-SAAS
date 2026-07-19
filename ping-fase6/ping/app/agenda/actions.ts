@@ -119,6 +119,23 @@ export async function createAppointment(input: {
     }
   }
 
+  // Trava contra dois agendamentos sobrepostos pro mesmo profissional — sem
+  // isso, nada impedia duas pessoas de marcar o mesmo horário (o
+  // BookingDrawer só esconde os horários ocupados como ajuda visual; quem
+  // garante de verdade é essa checagem aqui, do lado do servidor).
+  const { data: conflicts } = await supabase
+    .from("appointments")
+    .select("id")
+    .eq("business_id", business.id)
+    .eq("professional_id", input.professionalId)
+    .neq("status", "cancelled")
+    .lt("start_at", input.endAt)
+    .gt("end_at", input.startAt);
+
+  if (conflicts && conflicts.length > 0) {
+    return { error: "Esse horário acabou de ser ocupado com esse profissional. Escolha outro." };
+  }
+
   const { error: apptError } = await supabase.from("appointments").insert({
     business_id: business.id,
     client_id: clientId,
