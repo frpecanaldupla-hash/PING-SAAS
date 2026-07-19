@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
+import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 type CheckinClientRow = { id: string; name: string; points: number; total_visits: number };
@@ -37,8 +38,7 @@ async function applyCheckin(supabase: SupabaseServer, businessId: string, client
     return { error: "Não foi possível registrar o check-in. Tente de novo." };
   }
 
-  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-  const startOfTomorrow = new Date(new Date().setHours(24, 0, 0, 0)).toISOString();
+  const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO();
   await supabase
     .from("appointments")
     .update({ status: "checked_in" })
