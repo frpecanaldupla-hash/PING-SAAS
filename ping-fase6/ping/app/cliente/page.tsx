@@ -16,10 +16,19 @@ export default async function ClientePage() {
   const { data: client } = await supabase
     .from("clients")
     .select(`
-      id, name, qr_token, points, notes,
+      id, 
+      name, 
+      qr_token, 
+      points, 
+      notes,
+      business_id,
       businesses ( name ),
       appointments (
-        id, start_at, end_at, status, total_price,
+        id, 
+        start_at, 
+        end_at, 
+        status, 
+        total_price,
         services ( name )
       )
     `)
