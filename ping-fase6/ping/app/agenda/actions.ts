@@ -154,3 +154,49 @@ export async function createAppointment(input: {
   revalidatePath("/agenda");
   return { error: null };
 }
+
+// Chamada pelo drag-and-drop da AgendaGrid ao soltar um bloco em outro
+// horário e/ou outro profissional. Mesma trava de conflito do
+// createAppointment, mas excluindo o próprio agendamento da checagem
+// (senão ele sempre "colidiria" consigo mesmo).
+export async function moveAppointment(input: {
+  id: string;
+  professionalId: string;
+  startAt: string;
+  endAt: string;
+}) {
+  const supabase = await createClient();
+  const business = await getCurrentBusiness(supabase);
+  if (!business) return { error: "Negócio não encontrado." };
+
+  const { data: conflicts } = await supabase
+    .from("appointments")
+    .select("id")
+    .eq("business_id", business.id)
+    .eq("professional_id", input.professionalId)
+    .neq("status", "cancelled")
+    .neq("id", input.id)
+    .lt("start_at", input.endAt)
+    .gt("end_at", input.startAt);
+
+  if (conflicts && conflicts.length > 0) {
+    return { error: "Esse horário já está ocupado com esse profissional." };
+  }
+
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      professional_id: input.professionalId,
+      start_at: input.startAt,
+      end_at: input.endAt,
+    })
+    .eq("id", input.id)
+    .eq("business_id", business.id);
+
+  if (error) {
+    return { error: "Não foi possível mover o agendamento. Tente de novo." };
+  }
+
+  revalidatePath("/agenda");
+  return { error: null };
+}
