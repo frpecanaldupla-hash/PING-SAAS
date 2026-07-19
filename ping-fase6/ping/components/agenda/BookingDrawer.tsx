@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { X, ArrowLeft, Plus, CheckCircle2, Search, UserPlus } from "lucide-react";
-import type { Service, Professional } from "@/lib/types";
+import type { Service, Professional, Appointment } from "@/lib/types";
 import { createAppointment, searchClients } from "@/app/agenda/actions";
 
 type Step = "service" | "time" | "client" | "confirm" | "done";
@@ -23,16 +23,34 @@ function addMinutesISO(iso: string, minutes: number) {
   return d.toISOString();
 }
 
+// Um horário só aparece como escolhível se não colidir com nenhum
+// agendamento existente (não cancelado) desse profissional. Isso é só
+// ajuda visual — quem garante de verdade, contra corrida de duas abas
+// confirmando ao mesmo tempo, é a checagem em createAppointment.
+function isSlotFree(slot: string, durationMinutes: number, professionalId: string, appointments: Appointment[]) {
+  const start = timeSlotToISO(slot);
+  const end = addMinutesISO(start, durationMinutes);
+  return !appointments.some(
+    (a) =>
+      a.professionalId === professionalId &&
+      a.status !== "cancelled" &&
+      a.startAt < end &&
+      a.endAt > start
+  );
+}
+
 // Fluxo de agendamento: serviço → horário → cliente → confirmar. O
 // profissional já vem pré-selecionado (o primeiro da lista); trocar de
 // profissional é opcional e não conta contra o número de passos.
 export function BookingDrawer({
   services,
   professionals,
+  appointments,
   autoOpen = false,
 }: {
   services: Service[];
   professionals: Professional[];
+  appointments: Appointment[];
   autoOpen?: boolean;
 }) {
   const [open, setOpen] = useState(autoOpen);
@@ -210,20 +228,35 @@ export function BookingDrawer({
                   <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">
                     2 de 4 · Escolha o horário com {professional.name}
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TIME_SLOTS.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => {
-                          setTime(t);
-                          setStep("client");
-                        }}
-                        className="py-3 rounded-sm border border-ink-700 text-sm hover:bg-signal-500 hover:border-signal-500 hover:text-ink-950 transition-colors"
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                  {(() => {
+                    const freeSlots = TIME_SLOTS.filter((t) =>
+                      isSlotFree(t, service.durationMinutes, professional.id, appointments)
+                    );
+                    if (freeSlots.length === 0) {
+                      return (
+                        <p className="text-sm text-paper-400">
+                          Nenhum horário livre hoje com {professional.name} pra esse serviço.
+                          Tenta outro profissional ali em cima.
+                        </p>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-3 gap-2">
+                        {freeSlots.map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => {
+                              setTime(t);
+                              setStep("client");
+                            }}
+                            className="py-3 rounded-sm border border-ink-700 text-sm hover:bg-signal-500 hover:border-signal-500 hover:text-ink-950 transition-colors"
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
