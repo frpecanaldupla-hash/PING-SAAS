@@ -9,7 +9,10 @@ import { logoutClient } from "@/app/cliente/actions";
 
 export default async function ClientePage() {
   const clientId = await getSessionClientId();
-  if (!clientId) redirect("/cliente/entrar");
+
+  if (!clientId) {
+    redirect("/cliente/entrar");
+  }
 
   const supabase = createServiceRoleClient();
 
@@ -24,18 +27,16 @@ export default async function ClientePage() {
       business_id,
       businesses ( name ),
       appointments (
-        id, 
-        start_at, 
-        end_at, 
-        status, 
-        total_price,
+        id, start_at, end_at, status, total_price,
         services ( name )
       )
     `)
     .eq("id", clientId)
-    .maybeSingle();
+    .single();
 
-  if (!client) redirect("/cliente/entrar");
+  if (!client) {
+    redirect("/cliente/entrar");
+  }
 
   const business = Array.isArray(client.businesses) ? client.businesses[0] : client.businesses;
   const businessName = (business as { name?: string } | null)?.name ?? "PING";
