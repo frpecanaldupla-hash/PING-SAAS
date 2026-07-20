@@ -22,3 +22,19 @@ export async function updateMonthlyGoal(target: number) {
   revalidatePath("/financeiro");
   return { error: null };
 }
+
+export async function cancelTransaction(transactionId: string) {
+  const supabase = await createClient();
+  const business = await getCurrentBusiness(supabase);
+  if (!business) return { error: "Negócio não encontrado." };
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", transactionId)
+    .eq("business_id", business.id);
+
+  if (error) return { error: "Não foi possível cancelar o lançamento. Tente de novo." };
+
+  revalidatePath("/financeiro");
+  return
