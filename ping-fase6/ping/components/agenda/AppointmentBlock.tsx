@@ -34,14 +34,16 @@ export function AppointmentBlock({
   onDragEnd?: () => void;
 }) {
   const { top, height } = blockPosition(appointment.startAt, appointment.endAt);
-  const serviceNames = services
-    .filter((s) => appointment.serviceIds.includes(s.id))
-    .map((s) => s.name)
-    .join(" + ");
+ const serviceNames = services
+      .filter((s) => appointment.serviceIds.includes(s.id))
+      .map((s) => s.name)
+      .join(" + ");
 
-  const [showModal, setShowModal] = useState(false);
-const isDone = appointment.status === "completed" || appointment.status === "cancelled";
-  return (
+    const canDrag = DRAGGABLE_STATUSES.includes(appointment.status);
+
+    const [showModal, setShowModal] = useState(false);
+    const isDone = appointment.status === "completed" || appointment.status === "cancelled";
+    return (
     <div
       draggable={canDrag}
       onDragStart={canDrag ? (e) => onDragStart?.(e, appointment) : undefined}
