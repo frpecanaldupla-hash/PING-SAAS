@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { Appointment, Client, Service } from "@/lib/types";
+import { blockPosition, timeLabel } from "@/lib/agenda/time";
 import { CompleteAppointmentModal } from "./CompleteAppointmentModal";
+
+const STATUS_STYLE: Record<Appointment["status"], string> = {
 
 const STATUS_STYLE: Record<Appointment["status"], string> = {
   scheduled: "bg-ink-800 border-ink-600 text-paper-50",
