@@ -58,23 +58,35 @@ export default async function FinanceiroPage() {
         </div>
 
         <div className="ping-card p-6">
-          <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">Receita por forma de pagamento</p>
-          {receita === 0 ? (
-            <p className="text-sm text-paper-500">Nenhuma receita registrada ainda este mês.</p>
-          ) : (
-            <div className="flex items-end gap-4 h-32">
-              {Object.entries(byMethod).map(([method, value]) => (
-                <div key={method} className="flex-1 flex flex-col items-center justify-end gap-2">
-                  <div
-                    className="w-full bg-signal-500/70 rounded-t-sm"
-                    style={{ height: `${receita > 0 ? (value / receita) * 100 : 0}%`, minHeight: value > 0 ? "4px" : "0" }}
-                  />
-                  <p className="text-[11px] text-paper-500">{labelMethod[method]}</p>
-                </div>
-              ))}
+  <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">Receita por forma de pagamento</p>
+  {receita === 0 ? (
+    <p className="text-sm text-paper-500">Nenhuma receita registrada ainda este mês.</p>
+  ) : (
+    <div className="space-y-3">
+      {Object.entries(byMethod)
+        .sort(([, a], [, b]) => b - a)
+        .map(([method, value]) => {
+          const percent = receita > 0 ? Math.round((value / receita) * 100) : 0;
+          return (
+            <div key={method}>
+              <div className="flex items-baseline justify-between mb-1">
+                <p className="text-sm font-medium">{labelMethod[method]}</p>
+                <p className="text-xs text-paper-500">
+                  {currency(value)} <span className="text-paper-500">· {percent}%</span>
+                </p>
+              </div>
+              <div className="h-2 rounded-full bg-ink-800 overflow-hidden">
+                <div
+                  className="h-full bg-signal-500 rounded-full transition-all"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
             </div>
-          )}
-        </div>
+          );
+        })}
+    </div>
+  )}
+</div>
 
         <div className="ping-card p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">Lançamentos do mês</p>
