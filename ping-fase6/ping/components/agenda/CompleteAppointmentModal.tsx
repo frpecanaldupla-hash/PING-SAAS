@@ -40,8 +40,11 @@ export function CompleteAppointmentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-ink-950/80 flex items-center justify-center px-4">
-      <div className="ping-card w-full max-w-sm p-6">
+    <div
+  className="fixed inset-0 z-50 bg-ink-950/80 flex items-center justify-center px-4"
+  onClick={(e) => e.stopPropagation()}
+>
+  <div className="ping-card w-full max-w-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <p className="font-semibold">Concluir agendamento</p>
           <button onClick={onClose} className="text-paper-500"><X size={18} /></button>
