@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { periodRange, PERIOD_LABEL, type PeriodKey } from "@/lib/financeiro/period";
 import { GoalEditor } from "@/components/financeiro/GoalEditor";
+import { TransactionRow } from "@/components/financeiro/TransactionRow";
 
 const PERIODS: PeriodKey[] = ["hoje", "semana", "mes", "ano"];
 
@@ -154,19 +155,16 @@ export default async function FinanceiroPage({
               Nenhum lançamento nesse período. Conclua um agendamento na Agenda pra começar.
             </p>
           ) : (
-            <ul className="space-y-2 max-h-96 overflow-y-auto">
+           <ul className="space-y-2 max-h-96 overflow-y-auto">
               {transactions.map((t) => (
-                <li key={t.id} className="flex items-center justify-between border-b border-ink-800 pb-2">
-                  <div>
-                    <p className="text-sm font-medium">{labelType[t.type]}</p>
-                    <p className="text-[11px] text-paper-500">
-                      {labelMethod[t.method]} · {new Date(t.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <p className={`text-sm font-semibold ${t.type === "receita" ? "text-signal-500" : "text-danger"}`}>
-                    {t.type === "receita" ? "+" : "-"} {currency(Number(t.amount))}
-                  </p>
-                </li>
+                <TransactionRow
+                  key={t.id}
+                  id={t.id}
+                  label={labelType[t.type]}
+                  detail={`${labelMethod[t.method]} · ${new Date(t.created_at).toLocaleDateString("pt-BR")}`}
+                  amountLabel={currency(Number(t.amount))}
+                  isRevenue={t.type === "receita"}
+                />
               ))}
             </ul>
           )}
