@@ -44,29 +44,23 @@ export function AppointmentBlock({
     const [showModal, setShowModal] = useState(false);
     const isDone = appointment.status === "completed" || appointment.status === "cancelled";
     return (
-    <div
+<div
       draggable={canDrag}
       onDragStart={canDrag ? (e) => onDragStart?.(e, appointment) : undefined}
       onDragEnd={onDragEnd}
+      onClick={() => { if (!isDone) setShowModal(true); }}
       className={`absolute left-1 right-1 rounded-xs border px-2 py-1.5 overflow-hidden transition-all duration-150 ${STATUS_STYLE[appointment.status]} ${
         canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
       } ${isDragging ? "opacity-30 border-dashed border-signal-500 scale-[0.98]" : "opacity-100"}`}
       style={{ top, height }}
       title={`${serviceNames} · ${client?.name ?? "Cliente"}${canDrag ? " · arraste para reagendar" : ""}`}
     >
+    >
       <p className="text-[11px] font-semibold leading-tight truncate">
         {timeLabel(appointment.startAt)} · {client?.name ?? "Cliente"}
       </p>
       <p className="text-[11px] leading-tight truncate opacity-80">{serviceNames}</p>
-      {!isDone && (
-  <button
-    onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
-    className="mt-1 text-[10px] font-semibold text-signal-500 hover:text-signal-400"
-  >
-    Concluir
-  </button>
-)}
-
+    
 {showModal && (
         <CompleteAppointmentModal
           appointmentId={appointment.id}
