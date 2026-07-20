@@ -37,4 +37,5 @@ export async function cancelTransaction(transactionId: string) {
   if (error) return { error: "Não foi possível cancelar o lançamento. Tente de novo." };
 
   revalidatePath("/financeiro");
-  return
+  return { error: null };
+}
