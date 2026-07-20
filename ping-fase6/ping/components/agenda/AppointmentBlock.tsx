@@ -55,7 +55,6 @@ export function AppointmentBlock({
       style={{ top, height }}
       title={`${serviceNames} · ${client?.name ?? "Cliente"}${canDrag ? " · arraste para reagendar" : ""}`}
     >
-    >
       <p className="text-[11px] font-semibold leading-tight truncate">
         {timeLabel(appointment.startAt)} · {client?.name ?? "Cliente"}
       </p>
