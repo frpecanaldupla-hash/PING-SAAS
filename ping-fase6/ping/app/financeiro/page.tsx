@@ -1,89 +1,104 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { RevenueByMethodChart } from "@/components/shared/RevenueByMethodChart";
-import { MOCK_TRANSACTIONS } from "@/lib/mock/data";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentBusiness } from "@/lib/supabase/business";
 
-const TYPE_LABEL = {
-  receita: "Receita",
-  despesa: "Despesa",
-  comissao: "Comissão",
-} as const;
+// Substitui a narrativa fixa pelas transações reais. Nascem em dois
+// lugares: completeAppointment (agenda/actions.ts, receita + comissão) e
+// redeemReward (fidelidade/actions.ts, despesa) — sem "concluir
+// agendamento" na Agenda, essa tabela fica vazia pra sempre.
+export default async function FinanceiroPage() {
+  const supabase = await createClient();
+  const business = await getCurrentBusiness(supabase);
 
-const METHOD_LABEL = {
-  pix: "PIX",
-  cartao: "Cartão",
-  dinheiro: "Dinheiro",
-} as const;
+  if (!business) {
+    return (
+      <div className="min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-paper-500 text-sm">Não encontramos seu negócio. Tente entrar de novo.</p>
+        <Link href="/login" className="text-signal-500 text-sm font-semibold">Ir para o login</Link>
+      </div>
+    );
+  }
 
-// TODO(fase seguinte): conciliação automática via webhook do provedor PIX
-// (hoje o lançamento é manual/derivado do agendamento concluído).
-export default function FinanceiroPage() {
-  const revenue = MOCK_TRANSACTIONS
-    .filter((t) => t.type === "receita")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const expenses = MOCK_TRANSACTIONS
-    .filter((t) => t.type === "despesa" || t.type === "comissao")
-    .reduce((sum, t) => sum + t.amount, 0);
+  const startOfMonth = new Date(new Date().setDate(1)).toISOString();
+
+  const { data: rows } = await supabase
+    .from("transactions")
+    .select("id, amount, method, type, created_at")
+    .eq("business_id", business.id)
+    .gte("created_at", startOfMonth)
+    .order("created_at", { ascending: false });
+
+  const transactions = rows ?? [];
+  const receita = transactions.filter((t) => t.type === "receita").reduce((s, t) => s + Number(t.amount), 0);
+  const saidas = transactions.filter((t) => t.type !== "receita").reduce((s, t) => s + Number(t.amount), 0);
+
+  const byMethod: Record<string, number> = { pix: 0, cartao: 0, dinheiro: 0 };
+  transactions.filter((t) => t.type === "receita").forEach((t) => { byMethod[t.method] += Number(t.amount); });
+
+  const currency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const labelType: Record<string, string> = { receita: "Receita", despesa: "Despesa", comissao: "Comissão" };
+  const labelMethod: Record<string, string> = { pix: "PIX", cartao: "Cartão", dinheiro: "Dinheiro" };
 
   return (
     <div className="min-h-screen bg-ink-950 pb-16">
       <header className="flex items-center gap-4 px-5 lg:px-10 py-5 border-b border-ink-800">
-        <Link href="/dashboard" className="text-paper-500 hover:text-paper-50">
-          <ArrowLeft size={20} />
-        </Link>
+        <Link href="/dashboard" className="text-paper-500 hover:text-paper-50"><ArrowLeft size={20} /></Link>
         <div>
           <h1 className="font-display text-3xl tracking-wide leading-none">Financeiro</h1>
-          <p className="text-xs text-paper-500 mt-1">Barbearia Central</p>
+          <p className="text-xs text-paper-500 mt-1">{business.name}</p>
         </div>
       </header>
 
-      <main className="px-5 lg:px-10 py-8 max-w-4xl mx-auto space-y-6">
-        <div className="ping-card p-8">
-          <div className="flex items-center gap-3 mb-1">
-            <p className="text-xs uppercase tracking-wide text-paper-500">Este mês</p>
-            <span className="text-[11px] bg-signal-500/15 text-signal-500 px-2.5 py-1 rounded-full">
-              PIX integrado
-            </span>
-          </div>
-          <p className="font-display text-6xl tracking-wide mt-2">
-            R$ {revenue.toLocaleString("pt-BR")}
-          </p>
-          <p className="text-sm text-paper-500 mt-2">
-            R$ {expenses.toLocaleString("pt-BR")} em despesas e comissões
-          </p>
+      <main className="px-5 lg:px-10 py-8 max-w-3xl mx-auto space-y-6">
+        <div className="ping-card p-6">
+          <p className="text-xs uppercase tracking-wide text-paper-500 mb-1">Este mês</p>
+          <p className="font-display text-4xl">{currency(receita - saidas)}</p>
+          <p className="text-xs text-paper-500 mt-1">{currency(saidas)} em despesas e comissões</p>
         </div>
 
         <div className="ping-card p-6">
-          <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">
-            Receita por forma de pagamento
-          </p>
-          <RevenueByMethodChart transactions={MOCK_TRANSACTIONS} />
-        </div>
-
-        <div className="ping-card p-6">
-          <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">
-            Lançamentos de hoje
-          </p>
-          <div className="space-y-2">
-            {MOCK_TRANSACTIONS.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-ink-700"
-              >
-                <div>
-                  <p className="text-sm font-medium">{TYPE_LABEL[t.type]}</p>
-                  <p className="text-xs text-paper-500">{METHOD_LABEL[t.method]}</p>
+          <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">Receita por forma de pagamento</p>
+          {receita === 0 ? (
+            <p className="text-sm text-paper-500">Nenhuma receita registrada ainda este mês.</p>
+          ) : (
+            <div className="flex items-end gap-4 h-32">
+              {Object.entries(byMethod).map(([method, value]) => (
+                <div key={method} className="flex-1 flex flex-col items-center justify-end gap-2">
+                  <div
+                    className="w-full bg-signal-500/70 rounded-t-sm"
+                    style={{ height: `${receita > 0 ? (value / receita) * 100 : 0}%`, minHeight: value > 0 ? "4px" : "0" }}
+                  />
+                  <p className="text-[11px] text-paper-500">{labelMethod[method]}</p>
                 </div>
-                <p
-                  className={`ping-figure text-sm font-semibold ${
-                    t.type === "receita" ? "text-signal-500" : "text-paper-400"
-                  }`}
-                >
-                  {t.type === "receita" ? "+" : "-"} R$ {t.amount.toLocaleString("pt-BR")}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="ping-card p-6">
+          <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">Lançamentos do mês</p>
+          {transactions.length === 0 ? (
+            <p className="text-sm text-paper-500 text-center py-6">
+              Nenhum lançamento ainda. Conclua um agendamento na Agenda pra começar.
+            </p>
+          ) : (
+            <ul className="space-y-2 max-h-96 overflow-y-auto">
+              {transactions.map((t) => (
+                <li key={t.id} className="flex items-center justify-between border-b border-ink-800 pb-2">
+                  <div>
+                    <p className="text-sm font-medium">{labelType[t.type]}</p>
+                    <p className="text-[11px] text-paper-500">
+                      {labelMethod[t.method]} · {new Date(t.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <p className={`text-sm font-semibold ${t.type === "receita" ? "text-signal-500" : "text-danger"}`}>
+                    {t.type === "receita" ? "+" : "-"} {currency(Number(t.amount))}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
     </div>
