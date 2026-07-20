@@ -6,8 +6,6 @@ import { blockPosition, timeLabel } from "@/lib/agenda/time";
 import { CompleteAppointmentModal } from "./CompleteAppointmentModal";
 
 const STATUS_STYLE: Record<Appointment["status"], string> = {
-
-const STATUS_STYLE: Record<Appointment["status"], string> = {
   scheduled: "bg-ink-800 border-ink-600 text-paper-50",
   checked_in: "bg-signal-500/15 border-signal-500/60 text-signal-400",
   in_progress: "bg-signal-500/25 border-signal-500 text-paper-50",
