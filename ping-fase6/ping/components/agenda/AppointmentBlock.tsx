@@ -1,7 +1,7 @@
 "use client";
 
-import type { Appointment, Client, Service } from "@/lib/types";
-import { blockPosition, timeLabel } from "@/lib/agenda/time";
+import { useState } from "react";
+import { CompleteAppointmentModal } from "./CompleteAppointmentModal";
 
 const STATUS_STYLE: Record<Appointment["status"], string> = {
   scheduled: "bg-ink-800 border-ink-600 text-paper-50",
@@ -37,8 +37,8 @@ export function AppointmentBlock({
     .map((s) => s.name)
     .join(" + ");
 
-  const canDrag = DRAGGABLE_STATUSES.includes(appointment.status);
-
+  const [showModal, setShowModal] = useState(false);
+const isDone = appointment.status === "completed" || appointment.status === "cancelled";
   return (
     <div
       draggable={canDrag}
@@ -54,6 +54,23 @@ export function AppointmentBlock({
         {timeLabel(appointment.startAt)} · {client?.name ?? "Cliente"}
       </p>
       <p className="text-[11px] leading-tight truncate opacity-80">{serviceNames}</p>
+      {!isDone && (
+  <button
+    onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
+    className="mt-1 text-[10px] font-semibold text-signal-500 hover:text-signal-400"
+  >
+    Concluir
+  </button>
+)}
+
+{showModal && (
+        <CompleteAppointmentModal
+          appointmentId={appointment.id}
+          suggestedAmount={appointment.totalPrice}
+          onClose={() => setShowModal(false)}
+          onDone={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }
