@@ -95,7 +95,8 @@ export default async function FinanceiroPage({
             </Link>
           ))}
           
-            href={`/api/financeiro/export?period=${period}`}
+            <a
+              href={`/api/financeiro/export?period=${period}`}
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-paper-400 hover:text-paper-50 border border-ink-700 rounded-full px-3 py-1.5 transition-colors"
           >
             <Download size={13} /> Baixar CSV
