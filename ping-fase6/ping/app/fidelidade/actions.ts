@@ -112,6 +112,7 @@ export async function redeemReward(clientId: string) {
     amount: config.reward_value,
     method: "dinheiro",
     type: "despesa",
+    kind: "resgate",
   });
 
   revalidatePath("/fidelidade");

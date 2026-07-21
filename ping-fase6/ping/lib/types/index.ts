@@ -83,6 +83,7 @@ export interface Transaction {
   amount: number;
   method: "pix" | "cartao" | "dinheiro";
   type: "receita" | "despesa" | "comissao";
+  kind?: "resgate" | null; // origem específica, hoje só marca resgates de fidelidade
   createdAt: string;
 }
 

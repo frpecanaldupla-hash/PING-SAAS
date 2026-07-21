@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PingMark } from "@/components/shared/PingMark";
@@ -11,10 +11,17 @@ import { PingMark } from "@/components/shared/PingMark";
 // login — decide o que aparece na Sidebar numa fase futura.
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // app/auth/confirm/route.ts redireciona pra cá com esse parâmetro quando o
+  // link de confirmação de e-mail expirou ou já foi usado.
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "confirmacao"
+      ? "Esse link de confirmação expirou ou já foi usado. Tente entrar com sua senha."
+      : null
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -10,14 +10,14 @@ import { MetricCard } from "@/components/shared/MetricCard";
 import { PingMark } from "@/components/shared/PingMark";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
-import { todayRevenue, activeClientsCount, returnRate } from "@/lib/mock/metrics";
+import { todayRevenue, activeClientsCount, returnRate, pointsRedeemedToday } from "@/lib/dashboard/metrics";
 import { brasiliaDayRangeISO, todayLabelBrasilia } from "@/lib/time/brasilia";
 import type { Client, Transaction } from "@/lib/types";
 
 // O dashboard só busca os campos que as métricas precisam (não o registro
-// completo de Client/Transaction) — ver lib/mock/metrics.ts.
+// completo de Client/Transaction) — ver lib/dashboard/metrics.ts.
 type ClientMetric = Pick<Client, "totalVisits">;
-type TransactionMetric = Pick<Transaction, "amount" | "type">;
+type TransactionMetric = Pick<Transaction, "amount" | "type" | "kind">;
 
 // Hub pós-login. Antes mostrava "Barbearia Central" e métricas fixas pra
 // qualquer conta — agora busca o negócio de quem está logado e mostra os
@@ -40,18 +40,19 @@ export default async function DashboardPage() {
       supabase.from("clients").select("total_visits").eq("business_id", business.id),
       supabase
         .from("transactions")
-        .select("amount, type, created_at")
+        .select("amount, type, kind, created_at")
         .eq("business_id", business.id)
         .gte("created_at", brasiliaDayRangeISO().startOfToday),
     ]);
 
     clients = (clientRows ?? []).map((c) => ({ totalVisits: c.total_visits }));
-    transactions = (txRows ?? []).map((t) => ({ amount: t.amount, type: t.type }));
+    transactions = (txRows ?? []).map((t) => ({ amount: t.amount, type: t.type, kind: t.kind }));
   }
 
   const revenue = todayRevenue(transactions);
   const active = activeClientsCount(clients);
   const rate = returnRate(clients);
+  const redeemed = pointsRedeemedToday(transactions);
   const isEmpty = clients.length === 0 && transactions.length === 0;
 
   return (
@@ -95,7 +96,12 @@ export default async function DashboardPage() {
               change={clients.length > 0 ? "no mês" : "sem histórico ainda"}
               tone="neutral"
             />
-            <MetricCard label="Pontos resgatados" value="0" change="hoje" tone="neutral" />
+            <MetricCard
+              label="Pontos resgatados"
+              value={String(redeemed)}
+              change={redeemed > 0 ? "hoje" : "nenhum ainda"}
+              tone="neutral"
+            />
           </section>
 
           {/* Hero — a tese do produto continua a mesma, mas o nome do
