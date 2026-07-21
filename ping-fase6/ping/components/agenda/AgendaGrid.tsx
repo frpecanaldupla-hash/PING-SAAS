@@ -17,6 +17,7 @@ import {
 import { AppointmentBlock } from "./AppointmentBlock";
 import { ProfessionalName } from "./ProfessionalName";
 import { moveAppointment } from "@/app/agenda/actions";
+import { Card } from "@/components/ui/Card";
 
 export function AgendaGrid({
   professionals,
@@ -149,7 +150,7 @@ export function AgendaGrid({
         <div className="flex items-center gap-2">
           <button
             onClick={() => goToDate(new Date())}
-            className="text-xs text-signal-500 font-semibold hover:text-signal-400 transition-colors"
+            className="text-xs text-signal-400 font-semibold hover:text-signal-300 transition-colors"
           >
             Hoje
           </button>
@@ -157,12 +158,12 @@ export function AgendaGrid({
             type="date"
             value={selectedDate}
             onChange={(e) => e.target.value && goToDate(parseLocalDateOnly(e.target.value))}
-            className="bg-ink-800 border border-ink-700 rounded-sm px-2.5 py-1.5 text-xs text-paper-300 outline-none focus:border-signal-500"
+            className="bg-ink-800 border border-ink-700 rounded-sm px-2.5 py-1.5 text-xs text-paper-400 outline-none focus:border-signal-500 transition-colors"
           />
         </div>
       </div>
 
-      <div className="ping-card overflow-hidden relative">
+      <Card className="overflow-hidden">
       {dragError && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-danger text-white text-xs font-medium px-3 py-2 rounded-sm shadow-lg animate-rise">
           {dragError}
@@ -250,7 +251,7 @@ export function AgendaGrid({
           </div>
         ))}
       </div>
-      </div>
+      </Card>
     </div>
   );
 }

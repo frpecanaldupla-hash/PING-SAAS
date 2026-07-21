@@ -4,6 +4,9 @@ import { useState, useTransition } from "react";
 import { Pencil, Check, X, UserPlus } from "lucide-react";
 import type { Appointment, Professional } from "@/lib/types";
 import { addProfessional, updateProfessional } from "@/app/rh/actions";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 function cutsToday(professionalId: string, appointments: Appointment[]) {
   return appointments.filter(
@@ -87,50 +90,47 @@ export function TeamManager({
         />
       ))}
 
-      <div className="ping-card p-6 flex items-center justify-center">
+      <Card className="p-6">
         {adding ? (
           <div className="w-full space-y-3">
-            <input
+            <Input
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nome do profissional"
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-3 py-2.5 text-sm focus:border-signal-500 outline-none"
             />
-            <input
+            <Input
               value={newCommission}
               onChange={(e) => setNewCommission(e.target.value.replace(/[^\d.,]/g, ""))}
               placeholder="Comissão % (opcional)"
               inputMode="decimal"
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-3 py-2.5 text-sm focus:border-signal-500 outline-none"
             />
             {addError && <p className="text-danger text-xs">{addError}</p>}
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => { setAdding(false); setAddError(null); }}
-                className="flex-1 py-2 border border-ink-700 rounded-sm text-xs text-paper-400 hover:text-paper-50 transition-colors"
+                className="flex-1"
               >
                 Cancelar
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={isPending}
-                className="flex-1 py-2 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm text-xs transition-colors"
-              >
+              </Button>
+              <Button onClick={handleAdd} disabled={isPending} className="flex-1">
                 Adicionar
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
-          <button
-            onClick={() => setAdding(true)}
-            className="flex flex-col items-center gap-2 text-paper-500 hover:text-paper-50 transition-colors py-6"
-          >
-            <UserPlus size={22} />
-            <span className="text-sm">Adicionar profissional</span>
-          </button>
+          <div className="flex h-full items-center justify-center">
+            <button
+              onClick={() => setAdding(true)}
+              className="flex flex-col items-center gap-2 text-paper-500 hover:text-paper-50 transition-colors py-6"
+            >
+              <UserPlus size={22} />
+              <span className="text-sm">Adicionar profissional</span>
+            </button>
+          </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -169,9 +169,9 @@ function TeamCard({
   }
 
   return (
-    <div className="ping-card p-6">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 rounded-full bg-ink-800 flex items-center justify-center font-semibold text-sm shrink-0">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-b from-ink-800 to-ink-900 border border-steel-800 flex items-center justify-center font-semibold text-sm shrink-0">
           {p.name.charAt(0).toUpperCase()}
         </div>
         <button
@@ -255,6 +255,6 @@ function TeamCard({
           </button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

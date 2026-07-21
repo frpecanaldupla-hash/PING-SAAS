@@ -1,6 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { TeamManager } from "@/components/rh/TeamManager";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { ButtonLink } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
@@ -17,13 +18,14 @@ export default async function RhPage() {
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-paper-500 text-sm">
+      <div className="relative min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <Atmosphere />
+        <p className="relative z-10 text-paper-500 text-sm">
           Não encontramos seu negócio. Tente entrar de novo.
         </p>
-        <Link href="/login" className="text-signal-500 text-sm font-semibold">
+        <ButtonLink href="/login" variant="outline" className="relative z-10">
           Ir para o login
-        </Link>
+        </ButtonLink>
       </div>
     );
   }
@@ -70,20 +72,16 @@ export default async function RhPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-ink-950 pb-16">
-      <header className="flex items-center gap-4 px-5 lg:px-10 py-5 border-b border-ink-800">
-        <Link href="/dashboard" className="text-paper-500 hover:text-paper-50">
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <h1 className="font-display text-3xl tracking-wide leading-none">Equipe</h1>
-          <p className="text-xs text-paper-500 mt-1">{business.name}</p>
-        </div>
-      </header>
+    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
+      <Atmosphere />
 
-      <main className="px-5 lg:px-10 py-8 max-w-5xl mx-auto">
-        <TeamManager professionals={professionals} appointments={appointments} />
-      </main>
+      <div className="relative z-10">
+        <PageHeader title="Equipe" subtitle={business.name} />
+
+        <main className="px-5 lg:px-10 py-8 max-w-5xl mx-auto">
+          <TeamManager professionals={professionals} appointments={appointments} />
+        </main>
+      </div>
     </div>
   );
 }

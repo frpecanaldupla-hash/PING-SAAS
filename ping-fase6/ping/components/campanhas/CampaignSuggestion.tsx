@@ -5,6 +5,8 @@ import { Sparkles, Send } from "lucide-react";
 import type { Client, FidelityConfig } from "@/lib/types";
 import { suggestCampaign } from "@/lib/campaigns/segments";
 import { whatsappLink } from "@/lib/campaigns/whatsapp";
+import { Card } from "@/components/ui/Card";
+import { Textarea } from "@/components/ui/Input";
 
 export function CampaignSuggestion({
   clients,
@@ -17,7 +19,7 @@ export function CampaignSuggestion({
   const [message, setMessage] = useState(suggestion.message);
 
   return (
-    <div className="ping-card p-8">
+    <Card className="p-8">
       <div className="flex items-center gap-2 mb-6">
         <Sparkles size={18} className="text-brass-400" />
         <p className="text-sm font-semibold">Sugestão para hoje</p>
@@ -27,12 +29,13 @@ export function CampaignSuggestion({
         </span>
       </div>
 
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        rows={3}
-        className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none resize-none mb-5"
-      />
+      <div className="mb-5">
+        <Textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={3}
+        />
+      </div>
 
       {suggestion.matched.length === 0 ? (
         <p className="text-sm text-paper-500">
@@ -50,7 +53,7 @@ export function CampaignSuggestion({
                 href={whatsappLink(c.phone, message)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-signal-500 hover:text-signal-400 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-signal-400 hover:text-signal-300 transition-colors"
               >
                 <Send size={13} /> Enviar via WhatsApp
               </a>
@@ -58,6 +61,6 @@ export function CampaignSuggestion({
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

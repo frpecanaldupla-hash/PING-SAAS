@@ -3,6 +3,9 @@
 import { useState, useTransition } from "react";
 import { Pencil, Target } from "lucide-react";
 import { updateMonthlyGoal } from "@/app/financeiro/actions";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 export function GoalEditor({
   currentGoal,
@@ -33,7 +36,7 @@ export function GoalEditor({
   }
 
   return (
-    <div className="ping-card p-6">
+    <Card tone="gold" className="p-6">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs uppercase tracking-wide text-paper-500 flex items-center gap-1.5">
           <Target size={13} /> Meta do mês
@@ -50,24 +53,22 @@ export function GoalEditor({
 
       {editing ? (
         <div className="flex items-center gap-2">
-          <input
-            autoFocus
-            value={value}
-            onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
-            inputMode="decimal"
-            placeholder="Ex: 8000"
-            className="flex-1 bg-ink-800 border border-ink-700 rounded-sm px-3 py-2 text-sm focus:border-signal-500 outline-none"
-          />
-          <button
-            onClick={save}
-            disabled={isPending}
-            className="px-4 py-2 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm text-sm"
-          >
+          <div className="flex-1">
+            <Input
+              autoFocus
+              value={value}
+              onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
+              inputMode="decimal"
+              placeholder="Ex: 8000"
+              className="py-2"
+            />
+          </div>
+          <Button onClick={save} disabled={isPending}>
             {isPending ? "..." : "Salvar"}
-          </button>
-          <button onClick={() => setEditing(false)} className="px-3 py-2 text-paper-500 text-sm">
+          </Button>
+          <Button variant="ghost" onClick={() => setEditing(false)}>
             Cancelar
-          </button>
+          </Button>
         </div>
       ) : currentGoal > 0 ? (
         <>
@@ -76,7 +77,10 @@ export function GoalEditor({
             <p className="text-xs text-paper-500">de {currency(currentGoal)} · {percent}%</p>
           </div>
           <div className="h-2 rounded-full bg-ink-800 overflow-hidden">
-            <div className="h-full bg-brass-500 rounded-full transition-all" style={{ width: `${percent}%` }} />
+            <div
+              className="h-full bg-gradient-to-r from-brass-500 to-brass-400 rounded-full transition-all"
+              style={{ width: `${percent}%` }}
+            />
           </div>
         </>
       ) : (
@@ -84,6 +88,6 @@ export function GoalEditor({
       )}
 
       {error && <p className="text-danger text-xs mt-2">{error}</p>}
-    </div>
+    </Card>
   );
 }

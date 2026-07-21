@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PingMark } from "@/components/shared/PingMark";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 // Cadastro real via Supabase Auth. O negócio (tabela `businesses`) e o
 // vínculo de dono (`business_members`) são criados pela função de banco
@@ -94,11 +98,13 @@ export function RegisterForm() {
 
   if (pendingConfirmation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-ink-950 px-6">
-        <div className="w-full max-w-sm text-center">
+      <div className="relative min-h-screen flex items-center justify-center bg-ink-950 text-paper-50 px-6 overflow-x-hidden">
+        <Atmosphere />
+
+        <div className="relative z-10 w-full max-w-sm text-center animate-rise">
           <div className="flex justify-center">
             <Link href="/">
-              <PingMark size={72} />
+              <PingMark size={88} />
             </Link>
           </div>
           <h1 className="font-display text-3xl tracking-wide mt-4 mb-2">Quase lá</h1>
@@ -107,121 +113,101 @@ export function RegisterForm() {
             <strong className="text-paper-50">{email}</strong>. Clique nele e
             depois volte aqui para entrar.
           </p>
-          <Link
-            href="/login"
-            className="inline-block mt-6 text-signal-500 text-sm font-semibold"
-          >
+          <ButtonLink href="/login" variant="outline" className="mt-6">
             Ir para o login
-          </Link>
+          </ButtonLink>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-ink-950 px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-ink-950 text-paper-50 px-6 overflow-x-hidden">
+      <Atmosphere />
+
+      <div className="relative z-10 w-full max-w-sm py-12">
+        <div className="flex flex-col items-center mb-8 animate-rise">
           <Link href="/" className="flex flex-col items-center">
-            <PingMark size={72} />
+            <PingMark size={88} />
             <h1 className="font-display text-4xl tracking-wide mt-2">PING</h1>
           </Link>
           <p className="text-paper-500 text-sm mt-1">Crie a conta do seu negócio</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="ping-card p-6 space-y-4">
-          <div>
-            <label htmlFor="businessName" className="text-xs text-paper-500 mb-1.5 block">
-              Nome do negócio
-            </label>
-            <input
+        <Card className="animate-rise">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <Input
               id="businessName"
               type="text"
+              label="Nome do negócio"
               required
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="Ex: Barbearia Central"
             />
-          </div>
 
-          <div>
-            <label htmlFor="ownerName" className="text-xs text-paper-500 mb-1.5 block">
-              Seu nome
-            </label>
-            <input
+            <Input
               id="ownerName"
               type="text"
+              label="Seu nome"
               required
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="Ex: Zé"
+              hint="É assim que você vai aparecer na Agenda como profissional. Dá pra editar depois."
             />
-            <p className="text-[11px] text-paper-500 mt-1.5">
-              É assim que você vai aparecer na Agenda como profissional. Dá pra editar depois.
-            </p>
-          </div>
 
-          <div>
-            <label htmlFor="email" className="text-xs text-paper-500 mb-1.5 block">
-              E-mail
-            </label>
-            <input
+            <Input
               id="email"
               type="email"
+              label="E-mail"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="voce@barbearia.com"
             />
-          </div>
 
-          <div>
-            <label htmlFor="password" className="text-xs text-paper-500 mb-1.5 block">
-              Senha
-            </label>
-            <input
+            <Input
               id="password"
               type="password"
+              label="Senha"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="Mínimo 6 caracteres"
             />
-          </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="text-xs text-paper-500 mb-1.5 block">
-              Confirmar senha
-            </label>
-            <input
+            <Input
               id="confirmPassword"
               type="password"
+              label="Confirmar senha"
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="Repita a senha"
             />
-          </div>
 
-          {error && <p className="text-danger text-xs">{error}</p>}
+            {error && (
+              <p className="text-danger text-xs border border-danger/40 bg-danger/10 rounded-xs px-3 py-2.5">
+                {error}
+              </p>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm transition-colors"
-          >
-            {loading ? "Criando conta..." : "Criar conta grátis"}
-          </button>
-        </form>
+            <Button type="submit" size="lg" disabled={loading} className="w-full">
+              {loading ? "Criando conta..." : "Criar conta grátis"}
+            </Button>
+          </form>
+        </Card>
 
-        <p className="text-center text-sm text-paper-500 mt-5">
+        <p
+          className="text-center text-sm text-paper-500 mt-5 animate-rise"
+          style={{ animationDelay: "0.12s" }}
+        >
           Já tem conta?{" "}
-          <Link href="/login" className="text-signal-500 font-semibold">
+          <Link
+            href="/login"
+            className="text-signal-400 font-semibold hover:text-signal-300 transition-colors"
+          >
             Entrar
           </Link>
         </p>

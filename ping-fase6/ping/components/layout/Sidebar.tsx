@@ -15,11 +15,15 @@ const NAV_ITEMS = [
   { href: "/campanhas", label: "Campanhas", icon: Megaphone },
 ];
 
+// Fundo translúcido de propósito: nas telas que têm <Atmosphere /> atrás
+// (dashboard hoje, o resto conforme for migrando), as luzes volumétricas
+// vazam de leve pela sidebar; nas telas ainda sem atmosfera, ink-950/70
+// sobre ink-950 fica idêntico ao opaco de antes.
 export function Sidebar({ businessName = "Sua barbearia" }: { businessName?: string }) {
   return (
-    <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-ink-800 bg-ink-950 px-4 py-6">
+    <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-ink-800/80 bg-ink-950/70 backdrop-blur-md px-4 py-6">
       <Link href="/dashboard" className="flex items-center gap-2 px-2 mb-8">
-        <span className="w-2.5 h-2.5 rounded-full bg-signal-500 shadow-ping" />
+        <span className="w-2.5 h-2.5 rounded-full bg-signal-400 shadow-[0_0_10px_3px_rgba(255,91,61,0.7)]" />
         <span className="font-display text-2xl tracking-wide leading-none">PING</span>
       </Link>
 
@@ -28,9 +32,13 @@ export function Sidebar({ businessName = "Sua barbearia" }: { businessName?: str
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-paper-400 hover:text-paper-50 hover:bg-ink-800 transition-colors"
+            className="group flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-paper-400 hover:text-paper-50 hover:bg-ink-800 transition-colors"
           >
-            <item.icon size={18} strokeWidth={1.75} />
+            <item.icon
+              size={18}
+              strokeWidth={1.75}
+              className="text-steel-400 transition-colors group-hover:text-signal-300"
+            />
             {item.label}
           </Link>
         ))}
@@ -38,9 +46,13 @@ export function Sidebar({ businessName = "Sua barbearia" }: { businessName?: str
 
       <Link
         href="/cliente"
-        className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-paper-400 hover:text-paper-50 hover:bg-ink-800 transition-colors border-t border-ink-800 pt-4 mt-2"
+        className="group flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-paper-400 hover:text-paper-50 hover:bg-ink-800 transition-colors border-t border-ink-800 pt-4 mt-2"
       >
-        <QrCode size={18} strokeWidth={1.75} />
+        <QrCode
+          size={18}
+          strokeWidth={1.75}
+          className="text-steel-400 transition-colors group-hover:text-signal-300"
+        />
         Área do cliente
       </Link>
 

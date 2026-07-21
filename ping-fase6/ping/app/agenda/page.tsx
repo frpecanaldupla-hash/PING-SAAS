@@ -1,7 +1,9 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { AgendaGrid } from "@/components/agenda/AgendaGrid";
 import { BookingDrawer } from "@/components/agenda/BookingDrawer";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { ButtonLink } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import {
@@ -30,13 +32,14 @@ export default async function AgendaPage({
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-paper-500 text-sm">
+      <div className="relative min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <Atmosphere />
+        <p className="relative z-10 text-paper-500 text-sm">
           Não encontramos seu negócio. Tente entrar de novo.
         </p>
-        <Link href="/login" className="text-signal-500 text-sm font-semibold">
+        <ButtonLink href="/login" variant="outline" className="relative z-10">
           Ir para o login
-        </Link>
+        </ButtonLink>
       </div>
     );
   }
@@ -110,50 +113,52 @@ export default async function AgendaPage({
 
   const clients: Pick<Client, "id" | "name">[] = clientRows ?? [];
 
-  return (
-    <div className="min-h-screen bg-ink-950 pb-16">
-      <header className="flex items-center justify-between px-5 lg:px-10 py-5 border-b border-ink-800">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-paper-500 hover:text-paper-50">
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="font-display text-3xl tracking-wide leading-none">Agenda</h1>
-            <p className="text-xs text-paper-500 mt-1 capitalize">
-              {selectedDateLabel} · {business.name}
-            </p>
-          </div>
-        </div>
-        {professionals.length > 0 && (
-          <BookingDrawer
-            services={services}
-            professionals={professionals}
-            appointments={appointments}
-            initialDate={selectedDateISO}
-            autoOpen={novo === "1"}
-          />
-        )}
-      </header>
+  // O PageHeader não capitaliza mais o subtítulo por CSS (deformaria nomes
+  // de negócio) — a data, que começa minúscula, é capitalizada aqui.
+  const dateLabel =
+    selectedDateLabel.charAt(0).toUpperCase() + selectedDateLabel.slice(1);
 
-      <main className="px-5 lg:px-10 py-6 max-w-6xl mx-auto">
-        {professionals.length === 0 ? (
-          <div className="ping-card p-10 text-center">
-            <p className="text-paper-400 text-sm">
-              Nenhum profissional ativo ainda. Isso não deveria acontecer numa
-              conta recém-criada — se você está vendo isso, avisa a gente.
-            </p>
-          </div>
-        ) : (
-          <AgendaGrid
-            professionals={professionals}
-            appointments={appointments}
-            clients={clients}
-            services={services}
-            currentUserId={auth.user?.id}
-            selectedDate={selectedDateISO}
-          />
-        )}
-      </main>
+  return (
+    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
+      <Atmosphere />
+
+      <div className="relative z-10">
+        <PageHeader
+          title="Agenda"
+          subtitle={`${dateLabel} · ${business.name}`}
+          action={
+            professionals.length > 0 ? (
+              <BookingDrawer
+                services={services}
+                professionals={professionals}
+                appointments={appointments}
+                initialDate={selectedDateISO}
+                autoOpen={novo === "1"}
+              />
+            ) : undefined
+          }
+        />
+
+        <main className="px-5 lg:px-10 py-6 max-w-6xl mx-auto">
+          {professionals.length === 0 ? (
+            <Card className="p-10 text-center">
+              <p className="text-paper-400 text-sm">
+                Nenhum profissional ativo ainda. Isso não deveria acontecer numa
+                conta recém-criada — se você está vendo isso, avisa a gente.
+              </p>
+            </Card>
+          ) : (
+            <AgendaGrid
+              professionals={professionals}
+              appointments={appointments}
+              clients={clients}
+              services={services}
+              currentUserId={auth.user?.id}
+              selectedDate={selectedDateISO}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }

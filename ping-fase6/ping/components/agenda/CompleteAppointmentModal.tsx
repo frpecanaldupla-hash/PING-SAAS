@@ -3,6 +3,9 @@
 import { useState, useTransition } from "react";
 import { X, Check } from "lucide-react";
 import { completeAppointment } from "@/app/agenda/actions";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 const METHODS: { value: "pix" | "cartao" | "dinheiro"; label: string }[] = [
   { value: "pix", label: "Pix" },
@@ -41,23 +44,26 @@ export function CompleteAppointmentModal({
 
   return (
     <div
-  className="fixed inset-0 z-50 bg-ink-950/80 flex items-center justify-center px-4"
-  onClick={(e) => e.stopPropagation()}
->
-  <div className="ping-card w-full max-w-sm p-6">
+      className="fixed inset-0 z-50 bg-ink-950/80 backdrop-blur-sm flex items-center justify-center px-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Card className="w-full max-w-sm p-6 animate-rise">
         <div className="flex items-center justify-between mb-4">
           <p className="font-semibold">Concluir agendamento</p>
-          <button onClick={onClose} className="text-paper-500"><X size={18} /></button>
+          <button onClick={onClose} className="text-paper-500 hover:text-paper-50 transition-colors">
+            <X size={18} />
+          </button>
         </div>
 
-        <label className="text-xs text-paper-500 mb-1 block">Valor cobrado (R$)</label>
-        <input
-          autoFocus
-          value={amount}
-          onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ""))}
-          inputMode="decimal"
-          className="w-full bg-ink-800 border border-ink-700 rounded-sm px-3 py-2.5 text-sm focus:border-signal-500 outline-none mb-4"
-        />
+        <div className="mb-4">
+          <Input
+            label="Valor cobrado (R$)"
+            autoFocus
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ""))}
+            inputMode="decimal"
+          />
+        </div>
 
         <label className="text-xs text-paper-500 mb-1.5 block">Forma de pagamento</label>
         <div className="flex gap-2 mb-5">
@@ -65,10 +71,10 @@ export function CompleteAppointmentModal({
             <button
               key={m.value}
               onClick={() => setMethod(m.value)}
-              className={`flex-1 py-2 rounded-sm text-xs font-medium border transition-colors ${
+              className={`flex-1 py-2 rounded-sm text-xs border transition-all ${
                 method === m.value
-                  ? "bg-signal-500 text-ink-950 border-signal-500"
-                  : "border-ink-700 text-paper-400"
+                  ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                  : "border-ink-700 text-paper-400 font-medium hover:text-paper-50 hover:border-paper-500"
               }`}
             >
               {m.label}
@@ -78,14 +84,10 @@ export function CompleteAppointmentModal({
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
-        <button
-          onClick={confirm}
-          disabled={isPending}
-          className="w-full py-3 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm text-sm flex items-center justify-center gap-2"
-        >
+        <Button onClick={confirm} disabled={isPending} className="w-full">
           <Check size={16} /> {isPending ? "Salvando..." : "Confirmar conclusão"}
-        </button>
-      </div>
+        </Button>
+      </Card>
     </div>
   );
 }

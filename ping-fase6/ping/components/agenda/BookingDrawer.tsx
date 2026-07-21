@@ -4,6 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { X, ArrowLeft, Plus, CheckCircle2, Search, UserPlus } from "lucide-react";
 import type { Service, Professional, Appointment } from "@/lib/types";
 import { createAppointment, searchClients, getDayAppointments } from "@/app/agenda/actions";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import {
   generateSlotLabels,
   slotFitsBeforeClosing,
@@ -162,13 +164,10 @@ export function BookingDrawer({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold px-4 py-2.5 rounded-sm transition-colors text-sm"
-      >
+      <Button onClick={() => setOpen(true)}>
         <Plus size={16} />
         Novo agendamento
-      </button>
+      </Button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -191,10 +190,10 @@ export function BookingDrawer({
                 <button
                   key={p.id}
                   onClick={() => setProfessional(p)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border shrink-0 transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs border shrink-0 transition-all ${
                     professional.id === p.id
-                      ? "bg-signal-500 border-signal-500 text-ink-950"
-                      : "border-ink-700 text-paper-400 hover:text-paper-50"
+                      ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                      : "border-ink-700 text-paper-400 font-medium hover:text-paper-50 hover:border-paper-500"
                   }`}
                 >
                   {p.name}
@@ -215,7 +214,7 @@ export function BookingDrawer({
                         setService(s);
                         setStep("time");
                       }}
-                      className="w-full text-left p-4 ping-card hover:border-signal-500/50 transition-colors flex justify-between items-center"
+                      className="w-full text-left p-4 ping-card hover:border-signal-400/40 hover:-translate-y-0.5 transition-all flex justify-between items-center"
                     >
                       <div>
                         <p className="font-semibold text-sm">{s.name}</p>
@@ -233,7 +232,7 @@ export function BookingDrawer({
                 <div className="animate-rise">
                   <button
                     onClick={() => setStep("service")}
-                    className="mb-4 text-signal-500 text-sm flex items-center gap-1"
+                    className="mb-4 text-signal-400 hover:text-signal-300 transition-colors text-sm flex items-center gap-1"
                   >
                     <ArrowLeft size={14} /> Trocar serviço
                   </button>
@@ -251,10 +250,10 @@ export function BookingDrawer({
                         <button
                           key={d.toISOString()}
                           onClick={() => pickDate(d)}
-                          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          className={`shrink-0 px-3 py-1.5 rounded-full text-xs border transition-all ${
                             isSelected
-                              ? "bg-signal-500 border-signal-500 text-ink-950"
-                              : "border-ink-700 text-paper-400 hover:text-paper-50"
+                              ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                              : "border-ink-700 text-paper-400 font-medium hover:text-paper-50 hover:border-paper-500"
                           }`}
                         >
                           {dayChipLabel(d)}
@@ -305,7 +304,7 @@ export function BookingDrawer({
                 <div className="animate-rise">
                   <button
                     onClick={() => setStep("time")}
-                    className="mb-4 text-signal-500 text-sm flex items-center gap-1"
+                    className="mb-4 text-signal-400 hover:text-signal-300 transition-colors text-sm flex items-center gap-1"
                   >
                     <ArrowLeft size={14} /> Trocar horário
                   </button>
@@ -317,12 +316,12 @@ export function BookingDrawer({
                     <div className="space-y-3">
                       <div className="relative">
                         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-paper-500" />
-                        <input
+                        <Input
                           autoFocus
                           value={clientQuery}
                           onChange={(e) => setClientQuery(e.target.value)}
                           placeholder="Nome ou telefone"
-                          className="w-full bg-ink-800 border border-ink-700 rounded-sm pl-9 pr-3 py-3 text-sm focus:border-signal-500 outline-none"
+                          className="pl-9"
                         />
                       </div>
 
@@ -336,7 +335,7 @@ export function BookingDrawer({
                             <li key={c.id}>
                               <button
                                 onClick={() => pickExistingClient(c)}
-                                className="w-full text-left px-4 py-3 ping-card hover:border-signal-500/50 transition-colors flex justify-between items-center"
+                                className="w-full text-left px-4 py-3 ping-card hover:border-signal-400/40 transition-all flex justify-between items-center"
                               >
                                 <span className="text-sm font-medium">{c.name}</span>
                                 <span className="text-xs text-paper-500">{c.phone}</span>
@@ -355,41 +354,40 @@ export function BookingDrawer({
                           setCreatingClient(true);
                           setNewClientName(clientQuery.trim());
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-ink-700 rounded-sm text-sm text-paper-400 hover:text-paper-50 hover:border-ink-600 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-ink-700 rounded-sm text-sm text-paper-400 hover:text-paper-50 hover:border-signal-400/40 transition-colors"
                       >
                         <UserPlus size={15} /> Cadastrar cliente novo
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <input
+                      <Input
                         autoFocus
                         value={newClientName}
                         onChange={(e) => setNewClientName(e.target.value)}
                         placeholder="Nome do cliente"
-                        className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
                       />
-                      <input
+                      <Input
                         value={newClientPhone}
                         onChange={(e) => setNewClientPhone(e.target.value.replace(/[^\d()\-\s]/g, ""))}
                         placeholder="Telefone (WhatsApp)"
                         inputMode="tel"
-                        className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
                       />
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          variant="outline"
                           onClick={() => setCreatingClient(false)}
-                          className="flex-1 py-2.5 border border-ink-700 rounded-sm text-sm text-paper-400 hover:text-paper-50 transition-colors"
+                          className="flex-1"
                         >
                           Voltar pra busca
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           onClick={useNewClient}
                           disabled={!newClientName.trim() || newClientPhone.replace(/\D/g, "").length < 8}
-                          className="flex-1 py-2.5 bg-signal-500 hover:bg-signal-400 disabled:opacity-50 text-ink-950 font-semibold rounded-sm text-sm transition-colors"
+                          className="flex-1"
                         >
                           Usar esse cliente
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -400,7 +398,7 @@ export function BookingDrawer({
                 <div className="animate-rise flex flex-col items-center text-center py-6">
                   <button
                     onClick={() => setStep("client")}
-                    className="self-start mb-6 text-signal-500 text-sm flex items-center gap-1"
+                    className="self-start mb-6 text-signal-400 hover:text-signal-300 transition-colors text-sm flex items-center gap-1"
                   >
                     <ArrowLeft size={14} /> Trocar cliente
                   </button>
@@ -418,30 +416,31 @@ export function BookingDrawer({
                     <p className="text-danger text-xs mb-4">{saveError}</p>
                   )}
 
-                  <button
+                  <Button
+                    size="lg"
                     onClick={confirmAppointment}
                     disabled={isSaving}
-                    className="w-full py-3.5 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm transition-colors"
+                    className="w-full"
                   >
                     {isSaving ? "Salvando..." : "Confirmar agendamento"}
-                  </button>
+                  </Button>
                 </div>
               )}
 
               {step === "done" && service && time && (
                 <div className="animate-rise flex flex-col items-center text-center py-10">
-                  <CheckCircle2 size={64} className="text-signal-500 mb-5" />
+                  <CheckCircle2
+                    size={64}
+                    className="text-signal-400 mb-5 drop-shadow-[0_0_18px_rgba(255,91,61,0.5)]"
+                  />
                   <p className="font-display text-3xl tracking-wide mb-2">Agendado!</p>
                   <p className="text-paper-400 mb-8">
                     {service.name} · {dayChipLabel(selectedDate).toLowerCase()} às {time} com {professional.name}
                     {clientLabel ? ` para ${clientLabel}` : ""}.
                   </p>
-                  <button
-                    onClick={close}
-                    className="w-full py-3.5 border border-ink-700 hover:border-paper-500 rounded-sm transition-colors"
-                  >
+                  <Button size="lg" variant="outline" onClick={close} className="w-full">
                     Fechar
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

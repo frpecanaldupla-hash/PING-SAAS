@@ -24,9 +24,13 @@
 }
 
 @layer components {
-  /* Cartão base usado em toda a interface */
+  /* Cartão base legado — telas antigas e elementos <button> que precisam
+     do visual de cartão. Mesmo acabamento do components/ui/Card.tsx
+     (gradiente de volume + highlight interno) pra tudo harmonizar
+     enquanto a migração tela a tela não termina. */
   .ping-card {
-    @apply bg-ink-900 border border-ink-700 rounded-lg shadow-card;
+    @apply bg-gradient-to-br from-ink-900 to-ink-850 border border-ink-700 rounded-lg;
+    box-shadow: inset 0 1px 0 rgba(247, 244, 238, 0.04), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
   }
 
   /* Selo numérico usado em avisos de pontos/valores — mono para alinhamento tabular */

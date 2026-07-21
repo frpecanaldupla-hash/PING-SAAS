@@ -1,10 +1,14 @@
 import Link from "next/link";
-import { ArrowLeft, Download, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, TrendingUp, TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { periodRange, PERIOD_LABEL, type PeriodKey } from "@/lib/financeiro/period";
 import { GoalEditor } from "@/components/financeiro/GoalEditor";
 import { TransactionRow } from "@/components/financeiro/TransactionRow";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { ButtonLink } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const PERIODS: PeriodKey[] = ["hoje", "semana", "mes", "ano"];
 
@@ -21,9 +25,10 @@ export default async function FinanceiroPage({
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-paper-500 text-sm">Não encontramos seu negócio. Tente entrar de novo.</p>
-        <Link href="/login" className="text-signal-500 text-sm font-semibold">Ir para o login</Link>
+      <div className="relative min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <Atmosphere />
+        <p className="relative z-10 text-paper-500 text-sm">Não encontramos seu negócio. Tente entrar de novo.</p>
+        <ButtonLink href="/login" variant="outline" className="relative z-10">Ir para o login</ButtonLink>
       </div>
     );
   }
@@ -71,14 +76,11 @@ export default async function FinanceiroPage({
   const labelMethod: Record<string, string> = { pix: "PIX", cartao: "Cartão", dinheiro: "Dinheiro" };
 
   return (
-    <div className="min-h-screen bg-ink-950 pb-16">
-      <header className="flex items-center gap-4 px-5 lg:px-10 py-5 border-b border-ink-800">
-        <Link href="/dashboard" className="text-paper-500 hover:text-paper-50"><ArrowLeft size={20} /></Link>
-        <div>
-          <h1 className="font-display text-3xl tracking-wide leading-none">Financeiro</h1>
-          <p className="text-xs text-paper-500 mt-1">{business.name}</p>
-        </div>
-      </header>
+    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
+      <Atmosphere />
+
+      <div className="relative z-10">
+      <PageHeader title="Financeiro" subtitle={business.name} />
 
       <main className="px-5 lg:px-10 py-8 max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-2 flex-wrap">
@@ -86,41 +88,41 @@ export default async function FinanceiroPage({
             <Link
               key={p}
               href={`/financeiro?period=${p}`}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                 period === p
-                  ? "bg-signal-500 border-signal-500 text-ink-950"
-                  : "border-ink-700 text-paper-400 hover:text-paper-50"
+                  ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                  : "border-ink-700 text-paper-400 hover:text-paper-50 hover:border-paper-500"
               }`}
             >
               {PERIOD_LABEL[p]}
             </Link>
           ))}
-          
-            <a
-              href={`/api/financeiro/export?period=${period}`}
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-paper-400 hover:text-paper-50 border border-ink-700 rounded-full px-3 py-1.5 transition-colors"
+
+          <a
+            href={`/api/financeiro/export?period=${period}`}
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-paper-400 hover:text-paper-50 border border-ink-700 hover:border-paper-500 rounded-full px-3 py-1.5 transition-colors"
           >
             <Download size={13} /> Baixar CSV
           </a>
         </div>
 
-        <div className="ping-card p-6">
+        <Card className="p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-1">{PERIOD_LABEL[period]}</p>
           <div className="flex items-baseline gap-3 flex-wrap">
             <p className="font-display text-4xl">{currency(receita - saidas)}</p>
-            <span className={`inline-flex items-center gap-1 text-xs font-semibold ${variacao >= 0 ? "text-signal-500" : "text-danger"}`}>
+            <span className={`inline-flex items-center gap-1 text-xs font-semibold ${variacao >= 0 ? "text-signal-400" : "text-danger"}`}>
               {variacao >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
               {variacao >= 0 ? "+" : ""}{variacao}% vs. período anterior
             </span>
           </div>
           <p className="text-xs text-paper-500 mt-1">{currency(saidas)} em despesas e comissões</p>
-        </div>
+        </Card>
 
         {period === "mes" && (
           <GoalEditor currentGoal={Number(goalRow?.monthly_target ?? 0)} currentRevenue={receita} />
         )}
 
-        <div className="ping-card p-6">
+        <Card className="p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">Receita por forma de pagamento</p>
           {receita === 0 ? (
             <p className="text-sm text-paper-500">Nenhuma receita registrada nesse período.</p>
@@ -139,16 +141,19 @@ export default async function FinanceiroPage({
                         </p>
                       </div>
                       <div className="h-2 rounded-full bg-ink-800 overflow-hidden">
-                        <div className="h-full bg-signal-500 rounded-full transition-all" style={{ width: `${percent}%` }} />
+                        <div
+                          className="h-full bg-gradient-to-r from-signal-500 to-signal-400 rounded-full transition-all"
+                          style={{ width: `${percent}%` }}
+                        />
                       </div>
                     </div>
                   );
                 })}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className="ping-card p-6">
+        <Card className="p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">Lançamentos · {PERIOD_LABEL[period]}</p>
           {transactions.length === 0 ? (
             <p className="text-sm text-paper-500 text-center py-6">
@@ -168,8 +173,9 @@ export default async function FinanceiroPage({
               ))}
             </ul>
           )}
-        </div>
+        </Card>
       </main>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,9 @@ import { useState, useTransition } from "react";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import type { Service, Appointment } from "@/lib/types";
 import { createMyAppointment, getAvailability } from "@/app/cliente/agendar/actions";
+import { Button, buttonClasses } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Textarea } from "@/components/ui/Input";
 import {
   generateSlotLabels,
   slotFitsBeforeClosing,
@@ -89,7 +92,7 @@ export function ClientBookingFlow({
   }
 
   return (
-    <div className="ping-card p-6">
+    <Card className="p-6">
       {step === "service" && (
         <div className="space-y-3 animate-rise">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-1">
@@ -102,7 +105,7 @@ export function ClientBookingFlow({
                 setService(s);
                 setStep("time");
               }}
-              className="w-full text-left p-4 ping-card hover:border-signal-500/50 transition-colors flex justify-between items-center"
+              className="w-full text-left p-4 ping-card hover:border-signal-400/40 hover:-translate-y-0.5 transition-all flex justify-between items-center"
             >
               <div>
                 <p className="font-semibold text-sm">{s.name}</p>
@@ -120,7 +123,7 @@ export function ClientBookingFlow({
         <div className="animate-rise">
           <button
             onClick={() => setStep("service")}
-            className="mb-4 text-signal-500 text-sm flex items-center gap-1"
+            className="mb-4 text-signal-400 hover:text-signal-300 transition-colors text-sm flex items-center gap-1"
           >
             <ArrowLeft size={14} /> Trocar serviço
           </button>
@@ -135,10 +138,10 @@ export function ClientBookingFlow({
                 <button
                   key={d.toISOString()}
                   onClick={() => pickDate(d)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs border transition-all ${
                     isSelected
-                      ? "bg-signal-500 border-signal-500 text-ink-950"
-                      : "border-ink-700 text-paper-400 hover:text-paper-50"
+                      ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                      : "border-ink-700 text-paper-400 font-medium hover:text-paper-50 hover:border-paper-500"
                   }`}
                 >
                   {dayChipLabel(d)}
@@ -189,27 +192,25 @@ export function ClientBookingFlow({
         <div className="animate-rise">
           <button
             onClick={() => setStep("time")}
-            className="mb-4 text-signal-500 text-sm flex items-center gap-1"
+            className="mb-4 text-signal-400 hover:text-signal-300 transition-colors text-sm flex items-center gap-1"
           >
             <ArrowLeft size={14} /> Trocar horário
           </button>
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">
             3 de 4 · Alguma observação?
           </p>
-          <textarea
-            autoFocus
-            value={notes}
-            onChange={(e) => setNotes(e.target.value.slice(0, 280))}
-            placeholder="Opcional — ex: corte igual da última vez"
-            rows={4}
-            className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none resize-none mb-4"
-          />
-          <button
-            onClick={() => setStep("confirm")}
-            className="w-full py-3 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold rounded-sm text-sm transition-colors"
-          >
+          <div className="mb-4">
+            <Textarea
+              autoFocus
+              value={notes}
+              onChange={(e) => setNotes(e.target.value.slice(0, 280))}
+              placeholder="Opcional — ex: corte igual da última vez"
+              rows={4}
+            />
+          </div>
+          <Button onClick={() => setStep("confirm")} className="w-full">
             Continuar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -217,7 +218,7 @@ export function ClientBookingFlow({
         <div className="animate-rise flex flex-col items-center text-center py-6">
           <button
             onClick={() => setStep("notes")}
-            className="self-start mb-6 text-signal-500 text-sm flex items-center gap-1"
+            className="self-start mb-6 text-signal-400 hover:text-signal-300 transition-colors text-sm flex items-center gap-1"
           >
             <ArrowLeft size={14} /> Voltar
           </button>
@@ -229,31 +230,32 @@ export function ClientBookingFlow({
 
           {saveError && <p className="text-danger text-xs mb-4">{saveError}</p>}
 
-          <button
-            onClick={confirm}
-            disabled={isSaving}
-            className="w-full py-3.5 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm transition-colors mt-2"
-          >
+          <Button size="lg" onClick={confirm} disabled={isSaving} className="w-full mt-2">
             {isSaving ? "Agendando..." : "Confirmar agendamento"}
-          </button>
+          </Button>
         </div>
       )}
 
       {step === "done" && service && time && (
         <div className="animate-rise flex flex-col items-center text-center py-10">
-          <CheckCircle2 size={64} className="text-signal-500 mb-5" />
+          <CheckCircle2
+            size={64}
+            className="text-signal-400 mb-5 drop-shadow-[0_0_18px_rgba(255,91,61,0.5)]"
+          />
           <p className="font-display text-3xl tracking-wide mb-2">Agendado!</p>
           <p className="text-paper-400 mb-8">
             {service.name} · {dayChipLabel(selectedDate).toLowerCase()} às {time}.
           </p>
+          {/* <a> de propósito (não next/link): recarrega a página inteira e
+              garante que /cliente volte com os dados frescos do agendamento. */}
           <a
             href="/cliente"
-            className="w-full py-3.5 border border-ink-700 hover:border-paper-500 rounded-sm transition-colors block"
+            className={buttonClasses({ variant: "outline", size: "lg", className: "w-full" })}
           >
             Voltar pra sua área
           </a>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

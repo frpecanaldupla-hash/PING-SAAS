@@ -37,7 +37,7 @@ export function TransactionRow({
         <p className="text-[11px] text-paper-500">{detail}</p>
       </div>
       <div className="flex items-center gap-3">
-        <p className={`text-sm font-semibold ${isRevenue ? "text-signal-500" : "text-danger"}`}>
+        <p className={`text-sm font-semibold ${isRevenue ? "text-signal-400" : "text-danger"}`}>
           {isRevenue ? "+" : "-"} {amountLabel}
         </p>
         <button

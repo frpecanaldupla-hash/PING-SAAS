@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { ClientBookingFlow } from "@/components/cliente/ClientBookingFlow";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getSessionClientId } from "@/lib/client-portal/session";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { brasiliaDayRangeISO, todayDateOnly, formatDateOnlyISO } from "@/lib/time/brasilia";
@@ -68,31 +69,30 @@ export default async function AgendarPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-ink-950 pb-16">
-      <header className="flex items-center gap-4 px-5 lg:px-10 py-5 border-b border-ink-800">
-        <Link href="/cliente" className="text-paper-500 hover:text-paper-50">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="font-display text-3xl tracking-wide leading-none">Agendar</h1>
-      </header>
+    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
+      <Atmosphere />
 
-      <main className="px-5 lg:px-10 py-8 max-w-md mx-auto">
-        {services.length === 0 || professionalIds.length === 0 ? (
-          <div className="ping-card p-8 text-center">
-            <p className="text-paper-400 text-sm">
-              Esse negócio ainda não tem serviços ou profissionais configurados.
-              Volta mais tarde.
-            </p>
-          </div>
-        ) : (
-          <ClientBookingFlow
-            services={services}
-            professionalIds={professionalIds}
-            initialDate={todayISO}
-            initialAppointments={initialAppointments}
-          />
-        )}
-      </main>
+      <div className="relative z-10">
+        <PageHeader title="Agendar" backHref="/cliente" />
+
+        <main className="px-5 lg:px-10 py-8 max-w-md mx-auto">
+          {services.length === 0 || professionalIds.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-paper-400 text-sm">
+                Esse negócio ainda não tem serviços ou profissionais configurados.
+                Volta mais tarde.
+              </p>
+            </Card>
+          ) : (
+            <ClientBookingFlow
+              services={services}
+              professionalIds={professionalIds}
+              initialDate={todayISO}
+              initialAppointments={initialAppointments}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }

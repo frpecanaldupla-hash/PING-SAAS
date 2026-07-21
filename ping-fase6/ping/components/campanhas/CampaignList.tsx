@@ -1,4 +1,5 @@
 import type { Campaign } from "@/lib/types";
+import { Card } from "@/components/ui/Card";
 
 const STATUS_STYLE: Record<Campaign["status"], string> = {
   rascunho: "bg-ink-800 text-paper-500",
@@ -16,7 +17,7 @@ export function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
   return (
     <div className="space-y-3">
       {campaigns.map((c) => (
-        <div key={c.id} className="ping-card p-5">
+        <Card key={c.id} className="p-5">
           <div className="flex items-center justify-between mb-2">
             <p className="font-semibold text-sm">{c.name}</p>
             <span className={`text-[11px] px-2.5 py-1 rounded-full ${STATUS_STYLE[c.status]}`}>
@@ -24,7 +25,7 @@ export function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
             </span>
           </div>
           <p className="text-sm text-paper-500">{c.message}</p>
-        </div>
+        </Card>
       ))}
       {campaigns.length === 0 && (
         <p className="text-sm text-paper-500 text-center py-8">

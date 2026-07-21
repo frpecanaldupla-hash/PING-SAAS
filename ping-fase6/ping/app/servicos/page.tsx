@@ -1,8 +1,9 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { ServicesManager } from "@/components/servicos/ServicesManager";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { ButtonLink } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 // Substitui o placeholder "em construção" — este é o cardápio real do
 // negócio logado, com o catálogo de partida (semeado em
@@ -15,13 +16,14 @@ export default async function ServicosPage() {
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-paper-500 text-sm">
+      <div className="relative min-h-screen bg-ink-950 text-paper-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <Atmosphere />
+        <p className="relative z-10 text-paper-500 text-sm">
           Não encontramos seu negócio. Tente entrar de novo.
         </p>
-        <Link href="/login" className="text-signal-500 text-sm font-semibold">
+        <ButtonLink href="/login" variant="outline" className="relative z-10">
           Ir para o login
-        </Link>
+        </ButtonLink>
       </div>
     );
   }
@@ -35,20 +37,16 @@ export default async function ServicosPage() {
     .order("name", { ascending: true });
 
   return (
-    <div className="min-h-screen bg-ink-950 pb-16">
-      <header className="flex items-center gap-4 px-5 lg:px-10 py-5 border-b border-ink-800">
-        <Link href="/dashboard" className="text-paper-500 hover:text-paper-50">
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <h1 className="font-display text-3xl tracking-wide leading-none">Serviços</h1>
-          <p className="text-xs text-paper-500 mt-1">Cardápio de {business.name}</p>
-        </div>
-      </header>
+    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
+      <Atmosphere />
 
-      <main className="px-5 lg:px-10 py-6 max-w-3xl mx-auto">
-        <ServicesManager initialServices={services ?? []} />
-      </main>
+      <div className="relative z-10">
+        <PageHeader title="Serviços" subtitle={`Cardápio de ${business.name}`} />
+
+        <main className="px-5 lg:px-10 py-6 max-w-3xl mx-auto">
+          <ServicesManager initialServices={services ?? []} />
+        </main>
+      </div>
     </div>
   );
 }

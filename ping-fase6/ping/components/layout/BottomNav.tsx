@@ -17,7 +17,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center gap-1 py-2.5 text-paper-400 active:text-signal-500"
+            className="flex flex-col items-center gap-1 py-2.5 text-paper-400 transition-colors active:text-signal-400"
           >
             <item.icon size={20} strokeWidth={1.75} />
             <span className="text-[11px]">{item.label}</span>

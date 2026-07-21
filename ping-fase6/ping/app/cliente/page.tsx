@@ -1,7 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Calendar, Clock, LogOut } from "lucide-react";
 import { ClientQr } from "@/components/cliente/ClientQr";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { ButtonLink } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { fidelityProgress } from "@/lib/fidelity/points";
 import { getSessionClientId } from "@/lib/client-portal/session";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
@@ -76,8 +78,11 @@ export default async function ClientePage() {
   const lastVisits = appointments.filter((a) => a.status === "completed").slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-ink-950 pb-16">
-      <header className="flex items-center justify-between px-5 lg:px-10 py-5 border-b border-ink-800">
+    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
+      <Atmosphere />
+
+      <div className="relative z-10">
+      <header className="flex items-center justify-between px-5 lg:px-10 py-5 border-b border-ink-800/80">
         <div>
           <h1 className="font-display text-3xl tracking-wide leading-none">Sua área</h1>
           <p className="text-xs text-paper-500 mt-1">{businessName}</p>
@@ -93,16 +98,16 @@ export default async function ClientePage() {
       </header>
 
       <main className="px-5 lg:px-10 py-8 max-w-md mx-auto space-y-6">
-        <div className="ping-card p-8 text-center">
+        <Card className="p-8 text-center animate-rise">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">Seu QR Code</p>
           <ClientQr token={client.qr_token} />
           <p className="font-semibold mt-5 text-lg">{client.name}</p>
           <p className="text-xs text-paper-500 mt-1">
             Mostre este QR na barbearia para fazer check-in rápido
           </p>
-        </div>
+        </Card>
 
-        <div className="ping-card p-6">
+        <Card tone="gold" className="p-6 animate-rise">
           <div className="flex items-baseline justify-between mb-3">
             <p className="text-xs uppercase tracking-wide text-paper-500">Fidelidade</p>
             <p className="ping-figure text-2xl font-semibold text-brass-400">
@@ -111,7 +116,7 @@ export default async function ClientePage() {
           </div>
           <div className="h-2 rounded-full bg-ink-800 overflow-hidden mb-2">
             <div
-              className="h-full bg-brass-500 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-brass-500 to-brass-400 rounded-full transition-all"
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -120,9 +125,9 @@ export default async function ClientePage() {
               ? `Você já pode resgatar R$ ${fidelityConfig.rewardValue.toFixed(0)} de desconto!`
               : `Faltam ${remaining} pontos para R$ ${fidelityConfig.rewardValue.toFixed(0)} de desconto`}
           </p>
-        </div>
+        </Card>
 
-        <div className="ping-card p-6">
+        <Card className="p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4 flex items-center gap-2">
             <Calendar size={14} /> Próximos agendamentos
           </p>
@@ -152,9 +157,9 @@ export default async function ClientePage() {
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className="ping-card p-6">
+        <Card className="p-6">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4 flex items-center gap-2">
             <Clock size={14} /> Últimos cortes
           </p>
@@ -179,15 +184,13 @@ export default async function ClientePage() {
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        <Link
-          href="/cliente/agendar"
-          className="block text-center py-3.5 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold rounded-sm transition-colors"
-        >
+        <ButtonLink href="/cliente/agendar" size="lg" className="w-full">
           Agendar novo horário
-        </Link>
+        </ButtonLink>
       </main>
+      </div>
     </div>
   );
 }

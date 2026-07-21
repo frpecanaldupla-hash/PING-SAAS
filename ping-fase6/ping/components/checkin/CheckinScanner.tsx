@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ScanLine, CheckCircle2, Search, Camera, CameraOff } from "lucide-react";
 import { PingMark } from "@/components/shared/PingMark";
 import { checkinByQrToken, checkinClient, searchCheckinClients } from "@/app/checkin/actions";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 type ClientRow = { id: string; name: string; points: number };
 type ConfirmedCheckin = { name: string; points: number; pointsAdded: number };
@@ -132,26 +135,27 @@ export function CheckinScanner({ initialClients }: { initialClients: ClientRow[]
 
   if (confirmed) {
     return (
-      <div className="ping-card p-10 text-center animate-rise max-w-md mx-auto">
-        <CheckCircle2 size={64} className="text-signal-500 mx-auto mb-5" />
+      <Card className="p-10 text-center animate-rise max-w-md mx-auto">
+        <CheckCircle2
+          size={64}
+          className="text-signal-400 mx-auto mb-5 drop-shadow-[0_0_18px_rgba(255,91,61,0.5)]"
+        />
         <p className="font-display text-3xl tracking-wide mb-2">Check-in feito!</p>
         <p className="text-paper-400 mb-1">{confirmed.name} chegou.</p>
         <p className="ping-figure text-brass-400 text-lg font-semibold mb-8">
           +{confirmed.pointsAdded} pontos · {confirmed.points} no total
         </p>
-        <button
-          onClick={nextClient}
-          className="w-full py-3 border border-ink-700 hover:border-paper-500 rounded-sm transition-colors text-sm"
-        >
+        <Button variant="outline" onClick={nextClient} className="w-full">
           Próximo cliente
-        </button>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <div className="ping-card p-10 text-center flex flex-col items-center justify-center">
+      <Card className="p-10 text-center">
+        <div className="flex h-full flex-col items-center justify-center">
         {cameraOn ? (
           <div className="w-full">
             <div id={SCANNER_ELEMENT_ID} className="w-full rounded-sm overflow-hidden mb-4" />
@@ -172,29 +176,29 @@ export function CheckinScanner({ initialClients }: { initialClients: ClientRow[]
             <p className="text-sm text-paper-500 mt-1.5 mb-5">
               O check-in acontece assim que a câmera reconhece o código
             </p>
-            <button
+            <Button
               onClick={() => {
                 setCameraError(null);
                 setCameraOn(true);
               }}
-              className="inline-flex items-center gap-2 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold px-5 py-2.5 rounded-sm transition-colors text-sm"
             >
               <Camera size={16} /> Ativar câmera
-            </button>
+            </Button>
             {cameraError && <p className="text-danger text-xs mt-3">{cameraError}</p>}
           </>
         )}
-      </div>
+        </div>
+      </Card>
 
-      <div className="ping-card p-6">
+      <Card className="p-6">
         <p className="text-xs uppercase tracking-wide text-paper-500 mb-3">Ou busque pelo nome</p>
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-paper-500" />
-          <input
+          <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Nome do cliente"
-            className="w-full bg-ink-800 border border-ink-700 rounded-sm pl-9 pr-3 py-2.5 text-sm focus:border-signal-500 outline-none"
+            className="pl-9 py-2.5"
           />
         </div>
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
@@ -204,7 +208,7 @@ export function CheckinScanner({ initialClients }: { initialClients: ClientRow[]
               key={c.id}
               onClick={() => onCheckinById(c.id)}
               disabled={isChecking}
-              className="w-full text-left px-4 py-3 rounded-sm border border-ink-700 hover:border-signal-500/50 transition-colors flex justify-between items-center disabled:opacity-50"
+              className="w-full text-left px-4 py-3 rounded-sm border border-ink-700 hover:border-signal-400/40 transition-colors flex justify-between items-center disabled:opacity-50"
             >
               <span className="text-sm font-medium">{c.name}</span>
               <span className="ping-figure text-xs text-brass-400">{c.points} pts</span>
@@ -214,7 +218,7 @@ export function CheckinScanner({ initialClients }: { initialClients: ClientRow[]
             <p className="text-sm text-paper-500 text-center py-6">Nenhum cliente encontrado</p>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

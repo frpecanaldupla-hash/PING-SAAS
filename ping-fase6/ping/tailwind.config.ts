@@ -15,13 +15,15 @@ const config: Config = {
         ink: {
           950: "#0A0908",
           900: "#131211",
+          850: "#171512",
           800: "#1C1A18",
           700: "#28251F",
           600: "#3A362E",
         },
         // Sinal — vermelho de neon de vitrine de barbearia, o "PING" acontecendo
         signal: {
-          400: "#FF6B52",
+          300: "#FF8560",
+          400: "#FF5B3D",
           500: "#E8432F",
           600: "#C4331F",
         },
@@ -30,6 +32,12 @@ const config: Config = {
           300: "#E8CE8A",
           400: "#D4AF5A",
           500: "#C9A227",
+        },
+        // Aço — cinza frio de lâmina/instrumento, para detalhes neutros que
+        // não podem competir com signal nem brass
+        steel: {
+          400: "#8B95A1",
+          800: "#2E333A",
         },
         paper: {
           50: "#F7F4EE",
@@ -57,18 +65,47 @@ const config: Config = {
       },
       keyframes: {
         "ping-ring": {
-          "0%": { transform: "scale(0.9)", opacity: "0.9" },
-          "70%": { transform: "scale(2.4)", opacity: "0" },
-          "100%": { transform: "scale(2.4)", opacity: "0" },
+          "0%": { transform: "scale(0.5)", opacity: "0.95" },
+          "70%": { opacity: "0.18" },
+          "100%": { transform: "scale(2.55)", opacity: "0" },
         },
         "rise": {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        // Respiração do glow atrás do PingMark
+        "breathe": {
+          "0%, 100%": { opacity: "0.72", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.07)" },
+        },
+        // Rotação contínua — dial de precisão (lenta) e sheen metálico (média)
+        "spin-slow": {
+          to: { transform: "rotate(360deg)" },
+        },
+        // Barras de "onda sonora" do badge da marca
+        "wave-bounce": {
+          "0%, 100%": { transform: "scaleY(0.35)" },
+          "50%": { transform: "scaleY(1)" },
+        },
+        // Listras do divisor barber-pole correndo
+        "pole-run": {
+          to: { backgroundPosition: "-112px 0" },
+        },
+        // Lens flare pulsando sobre o núcleo do PingMark
+        "flare": {
+          "0%, 100%": { opacity: "0.28" },
+          "50%": { opacity: "0.65" },
+        },
       },
       animation: {
-        "ping-ring": "ping-ring 1.8s cubic-bezier(0.2,0.6,0.4,1) infinite",
+        "ping-ring": "ping-ring 2.7s cubic-bezier(0.2,0.65,0.35,1) infinite",
         "rise": "rise 0.5s cubic-bezier(0.2,0.6,0.2,1) both",
+        "breathe": "breathe 3.6s ease-in-out infinite",
+        "spin-slow": "spin-slow 46s linear infinite",
+        "spin-sheen": "spin-slow 5.5s linear infinite",
+        "wave-bounce": "wave-bounce 1.1s ease-in-out infinite",
+        "pole-run": "pole-run 9s linear infinite",
+        "flare": "flare 6s ease-in-out infinite",
       },
     },
   },

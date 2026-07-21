@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PingMark } from "@/components/shared/PingMark";
+import { Atmosphere } from "@/components/ui/Atmosphere";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 
 // Login real via Supabase Auth (email + senha). O papel do usuário
 // (dono/gerente/profissional) vem de `business_members.role` depois do
@@ -58,61 +62,61 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-ink-950 px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-ink-950 text-paper-50 px-6 overflow-x-hidden">
+      <Atmosphere />
+
+      <div className="relative z-10 w-full max-w-sm py-12">
+        <div className="flex flex-col items-center mb-8 animate-rise">
           <Link href="/" className="flex flex-col items-center">
-            <PingMark size={72} />
+            <PingMark size={88} />
             <h1 className="font-display text-4xl tracking-wide mt-2">PING</h1>
           </Link>
           <p className="text-paper-500 text-sm mt-1">Entre para continuar</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="ping-card p-6 space-y-4">
-          <div>
-            <label htmlFor="email" className="text-xs text-paper-500 mb-1.5 block">
-              E-mail
-            </label>
-            <input
+        <Card className="animate-rise">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <Input
               id="email"
               type="email"
+              label="E-mail"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="voce@barbearia.com"
             />
-          </div>
 
-          <div>
-            <label htmlFor="password" className="text-xs text-paper-500 mb-1.5 block">
-              Senha
-            </label>
-            <input
+            <Input
               id="password"
               type="password"
+              label="Senha"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-ink-800 border border-ink-700 rounded-sm px-4 py-3 text-sm focus:border-signal-500 outline-none"
               placeholder="••••••••"
             />
-          </div>
 
-          {error && <p className="text-danger text-xs">{error}</p>}
+            {error && (
+              <p className="text-danger text-xs border border-danger/40 bg-danger/10 rounded-xs px-3 py-2.5">
+                {error}
+              </p>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-signal-500 hover:bg-signal-400 disabled:opacity-60 text-ink-950 font-semibold rounded-sm transition-colors"
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
+            <Button type="submit" size="lg" disabled={loading} className="w-full">
+              {loading ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+        </Card>
 
-        <p className="text-center text-sm text-paper-500 mt-5">
+        <p
+          className="text-center text-sm text-paper-500 mt-5 animate-rise"
+          style={{ animationDelay: "0.12s" }}
+        >
           Ainda não tem conta?{" "}
-          <Link href="/cadastro" className="text-signal-500 font-semibold">
+          <Link
+            href="/cadastro"
+            className="text-signal-400 font-semibold hover:text-signal-300 transition-colors"
+          >
             Criar conta
           </Link>
         </p>
