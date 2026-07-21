@@ -65,6 +65,7 @@ export default async function RhPage() {
     endAt: a.end_at,
     status: a.status,
     totalPrice: Number(a.total_price),
+    notes: null,
     createdAt: a.created_at,
   }));
 

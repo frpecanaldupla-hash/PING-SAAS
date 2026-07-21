@@ -53,7 +53,7 @@ export function AppointmentBlock({
         canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
       } ${isDragging ? "opacity-30 border-dashed border-signal-500 scale-[0.98]" : "opacity-100"}`}
       style={{ top, height }}
-      title={`${serviceNames} · ${client?.name ?? "Cliente"}${canDrag ? " · arraste para reagendar" : ""}`}
+      title={`${serviceNames} · ${client?.name ?? "Cliente"}${appointment.notes ? ` · obs: ${appointment.notes}` : ""}${canDrag ? " · arraste para reagendar" : ""}`}
     >
       <p className="text-[11px] font-semibold leading-tight truncate">
         {timeLabel(appointment.startAt)} · {client?.name ?? "Cliente"}

@@ -48,7 +48,7 @@ export default async function ClientePage() {
       .maybeSingle(),
     supabase
       .from("appointments")
-      .select("id, service_ids, start_at, status, total_price")
+      .select("id, service_ids, start_at, status, total_price, notes")
       .eq("client_id", clientId)
       .order("start_at", { ascending: false }),
     supabase.from("services").select("id, name").eq("business_id", client.business_id),
@@ -133,19 +133,21 @@ export default async function ClientePage() {
           ) : (
             <div className="space-y-3">
               {upcoming.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex justify-between items-center px-3 py-2.5 rounded-sm border border-ink-700"
-                >
-                  <span className="text-sm">{serviceNamesFor(a.service_ids)}</span>
-                  <span className="ping-figure text-xs text-paper-400">
-                    {new Date(a.start_at).toLocaleString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                <div key={a.id} className="px-3 py-2.5 rounded-sm border border-ink-700">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">{serviceNamesFor(a.service_ids)}</span>
+                    <span className="ping-figure text-xs text-paper-400">
+                      {new Date(a.start_at).toLocaleString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  {a.notes && (
+                    <p className="text-xs text-paper-500 mt-1.5">&ldquo;{a.notes}&rdquo;</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -180,7 +182,7 @@ export default async function ClientePage() {
         </div>
 
         <Link
-          href="/agenda?novo=1"
+          href="/cliente/agendar"
           className="block text-center py-3.5 bg-signal-500 hover:bg-signal-400 text-ink-950 font-semibold rounded-sm transition-colors"
         >
           Agendar novo horário

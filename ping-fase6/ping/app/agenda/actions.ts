@@ -4,6 +4,39 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { creditVisit } from "@/lib/checkin/creditVisit";
+import { brasiliaDayRangeISO, parseDateOnlyISO } from "@/lib/time/brasilia";
+import type { Appointment } from "@/lib/types";
+
+// Usado pelo BookingDrawer quando o dono troca o dia dentro do passo de
+// horário — a Agenda (app/agenda/page.tsx) já busca os agendamentos do dia
+// que está sendo VISUALIZADO, mas o drawer deixa escolher qualquer um dos
+// próximos 14 dias pro novo agendamento, que pode ser diferente do dia
+// aberto na tela. Sem essa busca própria, a pré-visualização de horários
+// livres ficaria sempre baseada no dia errado.
+export async function getDayAppointments(date: string) {
+  type DayAppointment = Pick<Appointment, "professionalId" | "status" | "startAt" | "endAt">;
+
+  const supabase = await createClient();
+  const business = await getCurrentBusiness(supabase);
+  if (!business) return { appointments: [] as DayAppointment[] };
+
+  const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO(parseDateOnlyISO(date));
+  const { data } = await supabase
+    .from("appointments")
+    .select("professional_id, status, start_at, end_at")
+    .eq("business_id", business.id)
+    .gte("start_at", startOfToday)
+    .lt("start_at", startOfTomorrow);
+
+  const appointments: DayAppointment[] = (data ?? []).map((a) => ({
+    professionalId: a.professional_id,
+    status: a.status,
+    startAt: a.start_at,
+    endAt: a.end_at,
+  }));
+
+  return { appointments };
+}
 
 // Renomear usa a mesma policy de RLS "member full access" de professionals
 // (ver supabase/migrations/0001_init.sql) — qualquer membro do negócio pode

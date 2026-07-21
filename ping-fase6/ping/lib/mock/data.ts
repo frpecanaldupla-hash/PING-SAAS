@@ -67,27 +67,27 @@ export const MOCK_APPOINTMENTS: Appointment[] = [
   {
     id: "a1", businessId: MOCK_BUSINESS_ID, clientId: "c1", professionalId: "p1",
     serviceIds: ["s3"], startAt: todayAt(9, 0), endAt: todayAt(10, 0),
-    status: "completed", totalPrice: 75, createdAt: todayAt(8, 0),
+    status: "completed", totalPrice: 75, notes: null, createdAt: todayAt(8, 0),
   },
   {
     id: "a2", businessId: MOCK_BUSINESS_ID, clientId: "c2", professionalId: "p2",
     serviceIds: ["s4"], startAt: todayAt(10, 30), endAt: todayAt(11, 20),
-    status: "checked_in", totalPrice: 65, createdAt: todayAt(8, 30),
+    status: "checked_in", totalPrice: 65, notes: null, createdAt: todayAt(8, 30),
   },
   {
     id: "a3", businessId: MOCK_BUSINESS_ID, clientId: "c1", professionalId: "p1",
     serviceIds: ["s1"], startAt: todayAt(11, 10), endAt: todayAt(11, 50),
-    status: "scheduled", totalPrice: 45, createdAt: todayAt(9, 0),
+    status: "scheduled", totalPrice: 45, notes: null, createdAt: todayAt(9, 0),
   },
   {
     id: "a4", businessId: MOCK_BUSINESS_ID, clientId: "c2", professionalId: "p3",
     serviceIds: ["s5"], startAt: todayAt(14, 0), endAt: todayAt(16, 0),
-    status: "scheduled", totalPrice: 180, createdAt: todayAt(9, 10),
+    status: "scheduled", totalPrice: 180, notes: null, createdAt: todayAt(9, 10),
   },
   {
     id: "a5", businessId: MOCK_BUSINESS_ID, clientId: "c1", professionalId: "p2",
     serviceIds: ["s6"], startAt: todayAt(15, 0), endAt: todayAt(16, 10),
-    status: "scheduled", totalPrice: 95, createdAt: todayAt(9, 20),
+    status: "scheduled", totalPrice: 95, notes: null, createdAt: todayAt(9, 20),
   },
 ];
 

@@ -72,6 +72,7 @@ export interface Appointment {
   endAt: string;
   status: AppointmentStatus;
   totalPrice: number;
+  notes: string | null;
   createdAt: string;
 }
 

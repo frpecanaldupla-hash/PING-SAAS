@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Appointment, Client, Professional, Service } from "@/lib/types";
 import {
   hourMarks,
@@ -8,6 +10,9 @@ import {
   AGENDA_START_MIN,
   AGENDA_SPAN_MIN,
   clampAndSnapMinutes,
+  parseLocalDateOnly,
+  formatLocalDateOnly,
+  fullDateLabel,
 } from "@/lib/agenda/time";
 import { AppointmentBlock } from "./AppointmentBlock";
 import { ProfessionalName } from "./ProfessionalName";
@@ -19,15 +24,33 @@ export function AgendaGrid({
   clients,
   services,
   currentUserId,
+  selectedDate,
 }: {
   professionals: Professional[];
   appointments: Appointment[];
   clients: Pick<Client, "id" | "name">[];
   services: Service[];
   currentUserId?: string;
+  /** Dia sendo visto, "YYYY-MM-DD" (ver app/agenda/page.tsx) — controla a navegação de data no topo da grade. */
+  selectedDate: string;
 }) {
+  const router = useRouter();
   const marks = hourMarks();
   const rowCount = marks.length - 1;
+  // Convertido pra meia-noite LOCAL (fuso do navegador) assim que chega —
+  // dali em diante só se usa Date/setDate/setHours locais, nunca UTC (ver
+  // comentário no topo de lib/agenda/time.ts sobre por que essa fronteira importa).
+  const selectedDateOnly = parseLocalDateOnly(selectedDate);
+
+  function goToDate(dateOnly: Date) {
+    router.push(`/agenda?data=${formatLocalDateOnly(dateOnly)}`);
+  }
+
+  function shiftDay(deltaDays: number) {
+    const next = new Date(selectedDateOnly);
+    next.setDate(next.getDate() + deltaDays);
+    goToDate(next);
+  }
 
   // Estado do drag-and-drop vive aqui, no componente pai, porque tanto o
   // bloco arrastado (precisa ficar semitransparente) quanto a coluna de
@@ -85,7 +108,10 @@ export function AgendaGrid({
     const rawMinutes = AGENDA_START_MIN + Math.min(Math.max(ratio, 0), 1) * AGENDA_SPAN_MIN;
     const startMinutes = clampAndSnapMinutes(rawMinutes, durationMin);
 
-    const startDate = new Date();
+    // Precisa ser o dia que está sendo VISUALIZADO (selectedDateOnly), não
+    // "hoje" — senão arrastar um bloco num dia futuro silenciosamente
+    // devolvia o agendamento pra data de hoje.
+    const startDate = new Date(selectedDateOnly);
     startDate.setHours(0, startMinutes, 0, 0); // o overflow de minutos vira hora sozinho
     const startAt = startDate.toISOString();
     const endAt = new Date(startDate.getTime() + durationMin * 60000).toISOString();
@@ -100,7 +126,43 @@ export function AgendaGrid({
   }
 
   return (
-    <div className="ping-card overflow-hidden relative">
+    <div>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => shiftDay(-1)}
+            aria-label="Dia anterior"
+            className="w-8 h-8 flex items-center justify-center rounded-sm border border-ink-700 text-paper-400 hover:text-paper-50 hover:border-paper-500 transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={() => shiftDay(1)}
+            aria-label="Dia seguinte"
+            className="w-8 h-8 flex items-center justify-center rounded-sm border border-ink-700 text-paper-400 hover:text-paper-50 hover:border-paper-500 transition-colors"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <p className="text-sm font-medium capitalize ml-2">{fullDateLabel(selectedDateOnly)}</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => goToDate(new Date())}
+            className="text-xs text-signal-500 font-semibold hover:text-signal-400 transition-colors"
+          >
+            Hoje
+          </button>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => e.target.value && goToDate(parseLocalDateOnly(e.target.value))}
+            className="bg-ink-800 border border-ink-700 rounded-sm px-2.5 py-1.5 text-xs text-paper-300 outline-none focus:border-signal-500"
+          />
+        </div>
+      </div>
+
+      <div className="ping-card overflow-hidden relative">
       {dragError && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-danger text-white text-xs font-medium px-3 py-2 rounded-sm shadow-lg animate-rise">
           {dragError}
@@ -187,6 +249,7 @@ export function AgendaGrid({
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

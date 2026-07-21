@@ -4,7 +4,13 @@ import { AgendaGrid } from "@/components/agenda/AgendaGrid";
 import { BookingDrawer } from "@/components/agenda/BookingDrawer";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
-import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
+import {
+  brasiliaDayRangeISO,
+  dateOnlyLabel,
+  formatDateOnlyISO,
+  parseDateOnlyISO,
+  todayDateOnly,
+} from "@/lib/time/brasilia";
 import type { Appointment, Client, Professional, Service } from "@/lib/types";
 
 // Substitui os MOCK_* pelo negócio de quem está logado. Uma conta nova
@@ -14,9 +20,9 @@ import type { Appointment, Client, Professional, Service } from "@/lib/types";
 export default async function AgendaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ novo?: string }>;
+  searchParams: Promise<{ novo?: string; data?: string }>;
 }) {
-  const { novo } = await searchParams;
+  const { novo, data } = await searchParams;
 
   const supabase = await createClient();
   const business = await getCurrentBusiness(supabase);
@@ -35,7 +41,12 @@ export default async function AgendaPage({
     );
   }
 
-  const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO();
+  // Sem ?data, mostra hoje (Brasília) — mesmo comportamento de antes. Com
+  // ?data=YYYY-MM-DD, mostra o dia pedido (ver seletor em AgendaGrid).
+  const selectedDate = data ? parseDateOnlyISO(data) : todayDateOnly();
+  const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO(selectedDate);
+  const selectedDateISO = formatDateOnlyISO(selectedDate);
+  const selectedDateLabel = dateOnlyLabel(selectedDate);
 
   const [{ data: profRows }, { data: serviceRows }, { data: apptRows }, { data: clientRows }] =
     await Promise.all([
@@ -51,7 +62,7 @@ export default async function AgendaPage({
         .eq("active", true),
       supabase
         .from("appointments")
-        .select("id, business_id, client_id, professional_id, service_ids, start_at, end_at, status, total_price, created_at")
+        .select("id, business_id, client_id, professional_id, service_ids, start_at, end_at, status, total_price, notes, created_at")
         .eq("business_id", business.id)
         .gte("start_at", startOfToday)
         .lt("start_at", startOfTomorrow),
@@ -93,6 +104,7 @@ export default async function AgendaPage({
     endAt: a.end_at,
     status: a.status,
     totalPrice: Number(a.total_price),
+    notes: a.notes,
     createdAt: a.created_at,
   }));
 
@@ -107,7 +119,9 @@ export default async function AgendaPage({
           </Link>
           <div>
             <h1 className="font-display text-3xl tracking-wide leading-none">Agenda</h1>
-            <p className="text-xs text-paper-500 mt-1">Hoje · {business.name}</p>
+            <p className="text-xs text-paper-500 mt-1 capitalize">
+              {selectedDateLabel} · {business.name}
+            </p>
           </div>
         </div>
         {professionals.length > 0 && (
@@ -115,6 +129,7 @@ export default async function AgendaPage({
             services={services}
             professionals={professionals}
             appointments={appointments}
+            initialDate={selectedDateISO}
             autoOpen={novo === "1"}
           />
         )}
@@ -135,6 +150,7 @@ export default async function AgendaPage({
             clients={clients}
             services={services}
             currentUserId={auth.user?.id}
+            selectedDate={selectedDateISO}
           />
         )}
       </main>
