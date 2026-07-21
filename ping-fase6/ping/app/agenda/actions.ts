@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
+import { creditVisit } from "@/lib/checkin/creditVisit";
 
 // Renomear usa a mesma policy de RLS "member full access" de professionals
 // (ver supabase/migrations/0001_init.sql) — qualquer membro do negócio pode
@@ -218,7 +219,7 @@ export async function completeAppointment(
 
   const { data: appointment } = await supabase
     .from("appointments")
-    .select("id, business_id, professional_id")
+    .select("id, business_id, professional_id, client_id, status")
     .eq("id", appointmentId)
     .maybeSingle();
 
@@ -230,6 +231,22 @@ export async function completeAppointment(
     .eq("id", appointmentId);
 
   if (updateError) return { error: "Não foi possível concluir o agendamento." };
+
+  // A maioria dos donos nunca passa pela tela de Check-in separada — pra
+  // eles, concluir o pagamento aqui na Agenda É o check-in. Só credita
+  // pontos/visita se ainda não tiver sido creditado antes (status
+  // "checked_in" significa que já passou pelo QR ou pela busca manual).
+  if (appointment.status !== "checked_in") {
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id, points, total_visits")
+      .eq("id", appointment.client_id)
+      .maybeSingle();
+
+    if (client) {
+      await creditVisit(supabase, appointment.business_id, client);
+    }
+  }
 
   await supabase.from("transactions").insert({
     business_id: appointment.business_id,
@@ -262,5 +279,8 @@ export async function completeAppointment(
 
   revalidatePath("/agenda");
   revalidatePath("/financeiro");
+  revalidatePath("/checkin");
+  revalidatePath("/fidelidade");
+  revalidatePath("/dashboard");
   return { error: null };
 }

@@ -4,35 +4,20 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
+import { creditVisit } from "@/lib/checkin/creditVisit";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 type CheckinClientRow = { id: string; name: string; points: number; total_visits: number };
 
 // Núcleo do check-in, compartilhado pelos dois caminhos (busca manual e QR):
-// soma pontos de fidelidade, soma visita, marca a última visita, e — de
-// quebra — avança pra "checked_in" um agendamento de hoje que esse cliente
-// já tivesse como "scheduled" (integra com a Agenda sem exigir nada do
-// dono). Isso é só um bônus best-effort: falhar aqui não deve derrubar o
+// soma pontos de fidelidade, soma visita, marca a última visita (via
+// creditVisit, reaproveitado também por completeAppointment na Agenda), e —
+// de quebra — avança pra "checked_in" um agendamento de hoje que esse
+// cliente já tivesse como "scheduled" (integra com a Agenda sem exigir nada
+// do dono). Isso é só um bônus best-effort: falhar aqui não deve derrubar o
 // check-in em si.
 async function applyCheckin(supabase: SupabaseServer, businessId: string, client: CheckinClientRow) {
-  const { data: config } = await supabase
-    .from("fidelity_configs")
-    .select("points_per_visit")
-    .eq("business_id", businessId)
-    .maybeSingle();
-
-  const pointsAdded = config?.points_per_visit ?? 10;
-  const newPoints = client.points + pointsAdded;
-  const newVisits = client.total_visits + 1;
-
-  const { error } = await supabase
-    .from("clients")
-    .update({
-      points: newPoints,
-      total_visits: newVisits,
-      last_visit_at: new Date().toISOString(),
-    })
-    .eq("id", client.id);
+  const { error, newPoints, pointsAdded } = await creditVisit(supabase, businessId, client);
 
   if (error) {
     return { error: "Não foi possível registrar o check-in. Tente de novo." };
