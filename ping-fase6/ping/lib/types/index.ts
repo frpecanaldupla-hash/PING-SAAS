@@ -134,3 +134,21 @@ export interface Campaign {
   scheduledAt: string | null;
   createdAt: string;
 }
+
+// Assinatura do PING no negócio (o dono pagando o SaaS) — não confundir com
+// fidelidade, que é o programa do dono pros clientes DELE. Nunca guarda
+// dado de cartão: só plano, status e o id da assinatura no provedor
+// (ver supabase/migrations/0016_subscriptions.sql).
+export interface Subscription {
+  businessId: string;
+  plan: "mensal" | "trimestral" | "anual";
+  status: "trial" | "ativo" | "vencido" | "cancelado";
+  trialStartedAt: string;
+  trialEndsAt: string;
+  currentPeriodEndsAt: string | null;
+  provider: string | null;
+  providerSubscriptionId: string | null;
+  isInternalAccount: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
