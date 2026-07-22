@@ -1,10 +1,12 @@
-import type { Client, FidelityConfig, Campaign } from "@/lib/types";
+import type { Client, FidelityConfig } from "@/lib/types";
 import { todayDateOnlyBrasilia } from "@/lib/time/brasilia";
 
 // TODO(fase seguinte): trocar a geração de mensagem por uma chamada real à
 // API da Anthropic (`/v1/messages`) recebendo o segmento e o histórico do
 // negócio como contexto. Hoje é regra fixa por segmento — determinístico e
 // sem custo de API, mas é só um texto padrão, não é "IA" de verdade ainda.
+
+export type SegmentKind = "aniversariantes" | "sumidos" | "pontos_altos" | "todos";
 
 function daysSince(iso: string | null) {
   if (!iso) return Infinity;
@@ -15,16 +17,16 @@ export function inactiveClients(clients: Client[], days = 30) {
   return clients.filter((c) => daysSince(c.lastVisitAt) >= days);
 }
 
-export function birthdayClients(clients: Client[]) {
-  const today = todayDateOnlyBrasilia();
+// Mês, não dia exato — "aniversariantes do mês" dá tempo real de mandar a
+// mensagem antes da data (diferente da sugestão antiga, que só pegava quem
+// fazia aniversário hoje). `c.birthday` é data-only ("1990-07-19"), que o JS
+// sempre interpreta como meia-noite UTC — por isso getUTCMonth, não getMonth,
+// senão o fuso do navegador desloca o mês perto da virada. `today` já vem
+// pronta com os componentes certos de Brasília via construtor local.
+export function birthdayMonthClients(clients: Client[], monthIndex = todayDateOnlyBrasilia().getMonth()) {
   return clients.filter((c) => {
     if (!c.birthday) return false;
-    // `c.birthday` é uma data-only ("1990-07-19"), que o JS sempre
-    // interpreta como meia-noite UTC — por isso lemos com getUTCMonth/
-    // getUTCDate, não getMonth/getDate, senão o fuso do navegador desloca
-    // o dia. `today` já veio pronta com os componentes certos de Brasília.
-    const b = new Date(c.birthday);
-    return b.getUTCMonth() === today.getMonth() && b.getUTCDate() === today.getDate();
+    return new Date(c.birthday).getUTCMonth() === monthIndex;
   });
 }
 
@@ -32,40 +34,63 @@ export function highPointsClients(clients: Client[], config: FidelityConfig) {
   return clients.filter((c) => c.points >= config.rewardThreshold * 0.7);
 }
 
-const AUDIENCE_LABEL: Record<Campaign["audience"], string> = {
+export const SEGMENT_ORDER: SegmentKind[] = ["aniversariantes", "sumidos", "pontos_altos", "todos"];
+
+export const SEGMENT_LABEL: Record<SegmentKind, string> = {
+  aniversariantes: "Aniversariantes do mês",
+  sumidos: "Sumidos",
+  pontos_altos: "Nível de fidelidade",
   todos: "Todos os clientes",
-  inativos_30d: "Inativos há 30+ dias",
-  aniversariantes: "Aniversariantes de hoje",
-  pontos_altos: "Perto do resgate",
 };
 
-export function suggestCampaign(clients: Client[], config: FidelityConfig) {
-  // Prioridade da sugestão: aniversariante > inativo > perto do resgate.
-  const birthdays = birthdayClients(clients);
-  if (birthdays.length > 0) {
-    return {
-      audience: "aniversariantes" as const,
-      audienceLabel: AUDIENCE_LABEL.aniversariantes,
-      matched: birthdays,
-      message: `Parabéns! Hoje é seu dia 🎉 Ganhe ${Math.round(config.pointsPerVisit * 2)} pontos de bônus se passar aqui essa semana.`,
-    };
-  }
+// Mesmo enum de audience já usado na tabela `campaigns` (ver
+// supabase/migrations/0001_init.sql) — "pontos_altos" e "sumidos" mapeiam
+// pros nomes que a coluna já esperava antes desse segmento virar escolha
+// manual (era "inativos_30d" fixo; agora o dono escolhe o X dias).
+export const SEGMENT_AUDIENCE: Record<SegmentKind, "todos" | "inativos_30d" | "aniversariantes" | "pontos_altos"> = {
+  aniversariantes: "aniversariantes",
+  sumidos: "inativos_30d",
+  pontos_altos: "pontos_altos",
+  todos: "todos",
+};
 
-  const inactive = inactiveClients(clients, 30);
-  if (inactive.length > 0) {
-    return {
-      audience: "inativos_30d" as const,
-      audienceLabel: AUDIENCE_LABEL.inativos_30d,
-      matched: inactive,
-      message: `Faz tempo que a gente não te vê por aqui! Que tal marcar um horário essa semana? Separei um combo especial pra você.`,
-    };
+export function defaultMessageFor(kind: SegmentKind, config: FidelityConfig) {
+  switch (kind) {
+    case "aniversariantes":
+      return `Parabéns pelo mês, {nome}! 🎉 Ganhe pontos de bônus na {negocio} se passar aqui essa semana.`;
+    case "sumidos":
+      return `Oi {nome}, faz tempo que a gente não te vê na {negocio}! Que tal marcar um horário essa semana?`;
+    case "pontos_altos":
+      return `{nome}, você está quase lá! Faltam poucos pontos pra resgatar R$ ${config.rewardValue.toFixed(0)} de desconto na {negocio}.`;
+    case "todos":
+      return `Oi {nome}! Passando aqui pra lembrar que a {negocio} está te esperando. Bora marcar um horário?`;
   }
+}
 
-  const highPoints = highPointsClients(clients, config);
-  return {
-    audience: "pontos_altos" as const,
-    audienceLabel: AUDIENCE_LABEL.pontos_altos,
-    matched: highPoints,
-    message: `Você está quase lá! Faltam poucos pontos para resgatar R$ ${config.rewardValue.toFixed(0)} de desconto. Aproveita essa semana.`,
-  };
+export function clientsForSegment(
+  kind: SegmentKind,
+  clients: Client[],
+  config: FidelityConfig,
+  options?: { inactiveDays?: number }
+) {
+  switch (kind) {
+    case "aniversariantes":
+      return birthdayMonthClients(clients);
+    case "sumidos":
+      return inactiveClients(clients, options?.inactiveDays ?? 30);
+    case "pontos_altos":
+      return highPointsClients(clients, config);
+    case "todos":
+      return clients;
+  }
+}
+
+// Ponto de partida do seletor: mesma prioridade da sugestão automática que
+// existia antes (aniversariante > sumido > perto do resgate), só que agora é
+// só o valor inicial dos chips — o dono pode trocar pra qualquer segmento.
+export function defaultSegment(clients: Client[], config: FidelityConfig): SegmentKind {
+  if (birthdayMonthClients(clients).length > 0) return "aniversariantes";
+  if (inactiveClients(clients, 30).length > 0) return "sumidos";
+  if (highPointsClients(clients, config).length > 0) return "pontos_altos";
+  return "todos";
 }
