@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Calendar, Clock, LogOut } from "lucide-react";
+import { Accessibility, Baby, Calendar, Car, Clock, LogOut, MapPin, Navigation, Wifi } from "lucide-react";
 import { ClientQr } from "@/components/cliente/ClientQr";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
@@ -33,14 +33,34 @@ export default async function ClientePage() {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, name, qr_token, points, business_id, businesses ( name )")
+    .select(
+      "id, name, qr_token, points, business_id, blocked_at, businesses ( name, address, maps_url, has_wifi, has_kids_area, has_parking, has_accessibility )"
+    )
     .eq("id", clientId)
     .maybeSingle();
 
   if (!client) redirect("/cliente/entrar");
 
   const business = Array.isArray(client.businesses) ? client.businesses[0] : client.businesses;
-  const businessName = (business as { name?: string } | null)?.name ?? "PING";
+  const businessProfile = business as {
+    name?: string;
+    address?: string | null;
+    maps_url?: string | null;
+    has_wifi?: boolean;
+    has_kids_area?: boolean;
+    has_parking?: boolean;
+    has_accessibility?: boolean;
+  } | null;
+  const businessName = businessProfile?.name ?? "PING";
+
+  const amenities = [
+    { label: "Wi-Fi", icon: Wifi, enabled: businessProfile?.has_wifi ?? false },
+    { label: "Kids", icon: Baby, enabled: businessProfile?.has_kids_area ?? false },
+    { label: "Estacionamento", icon: Car, enabled: businessProfile?.has_parking ?? false },
+    { label: "Acessível", icon: Accessibility, enabled: businessProfile?.has_accessibility ?? false },
+  ].filter((a) => a.enabled);
+
+  const hasProfileInfo = Boolean(businessProfile?.address || businessProfile?.maps_url) || amenities.length > 0;
 
   const [{ data: configRow }, { data: apptRows }, { data: serviceRows }] = await Promise.all([
     supabase
@@ -186,9 +206,52 @@ export default async function ClientePage() {
           )}
         </Card>
 
-        <ButtonLink href="/cliente/agendar" size="lg" className="w-full">
-          Agendar novo horário
-        </ButtonLink>
+        {hasProfileInfo && (
+          <Card className="p-6">
+            <p className="text-xs uppercase tracking-wide text-paper-500 mb-4 flex items-center gap-2">
+              <MapPin size={14} /> Sobre {businessName}
+            </p>
+
+            {amenities.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {amenities.map((a) => (
+                  <span
+                    key={a.label}
+                    className="inline-flex items-center gap-1.5 text-xs text-paper-400 bg-ink-800 border border-ink-700 rounded-full px-3 py-1.5"
+                  >
+                    <a.icon size={13} className="text-brass-400" /> {a.label}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {businessProfile?.address && (
+              <p className="text-sm text-paper-400 mb-4">{businessProfile.address}</p>
+            )}
+
+            {businessProfile?.maps_url && (
+              <a
+                href={businessProfile.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-signal-400 hover:text-signal-300 font-semibold transition-colors"
+              >
+                <Navigation size={15} /> Como chegar
+              </a>
+            )}
+          </Card>
+        )}
+
+        {client.blocked_at ? (
+          <p className="text-center text-sm text-paper-500 border border-ink-800 rounded-sm px-4 py-3.5">
+            Sua conta está temporariamente impedida de criar novos agendamentos. Fale com{" "}
+            {businessName}.
+          </p>
+        ) : (
+          <ButtonLink href="/cliente/agendar" size="lg" className="w-full">
+            Agendar novo horário
+          </ButtonLink>
+        )}
       </main>
       </div>
     </div>

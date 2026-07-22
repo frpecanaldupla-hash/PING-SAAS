@@ -43,12 +43,14 @@ export async function searchFidelityClients(query: string) {
   const supabase = await createClient();
   const business = await getCurrentBusiness(supabase);
   if (!business) {
-    return { clients: [] as { id: string; name: string; points: number; totalVisits: number }[] };
+    return {
+      clients: [] as { id: string; name: string; points: number; totalVisits: number; blockedAt: string | null }[],
+    };
   }
 
   const base = supabase
     .from("clients")
-    .select("id, name, points, total_visits")
+    .select("id, name, points, total_visits, blocked_at")
     .eq("business_id", business.id);
 
   const { data } =
@@ -62,8 +64,32 @@ export async function searchFidelityClients(query: string) {
       name: c.name,
       points: c.points,
       totalVisits: c.total_visits,
+      blockedAt: c.blocked_at,
     })),
   };
+}
+
+// Bloqueia/desbloqueia um cliente — impede que ELE (não a equipe) crie
+// novos agendamentos pela Área do Cliente (guarda em createMyAppointment,
+// ver app/cliente/agendar/actions.ts). A equipe continua podendo agendar
+// por ele manualmente pela Agenda, sem checagem nenhuma lá — ver migration
+// 0014_client_blocked.sql. `.eq("business_id", ...)` impede um dono
+// bloquear cliente de outro negócio adivinhando o id.
+export async function setClientBlocked(clientId: string, blocked: boolean) {
+  const supabase = await createClient();
+  const business = await getCurrentBusiness(supabase);
+  if (!business) return { error: "Negócio não encontrado." };
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ blocked_at: blocked ? new Date().toISOString() : null })
+    .eq("id", clientId)
+    .eq("business_id", business.id);
+
+  if (error) return { error: "Não foi possível atualizar. Tente de novo." };
+
+  revalidatePath("/fidelidade");
+  return { error: null };
 }
 
 // Resgata o prêmio: desconta os carimbos usados COM rollover — se o

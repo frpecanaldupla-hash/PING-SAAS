@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { X, ArrowLeft, Plus, CheckCircle2, Search, UserPlus } from "lucide-react";
-import type { Service, Professional, Appointment } from "@/lib/types";
+import type { Service, Professional, Appointment, BusinessHours, ProfessionalTimeOff } from "@/lib/types";
 import { createAppointment, searchClients, getDayAppointments } from "@/app/agenda/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
   generateSlotLabels,
   slotFitsBeforeClosing,
+  getDayWindow,
+  isSlotBlocked,
   nextNDays,
   dayChipLabel,
   parseLocalDateOnly,
@@ -22,10 +24,6 @@ type Step = "service" | "time" | "client" | "confirm" | "done";
 type FoundClient = { id: string; name: string; phone: string };
 type DayAppointment = Pick<Appointment, "professionalId" | "status" | "startAt" | "endAt">;
 
-// Gerado a partir de AGENDA_START_MIN/AGENDA_END_MIN (lib/agenda/time.ts) —
-// hoje é 07:00–23:00 de meia em meia hora. Mudar o horário de
-// funcionamento do negócio é mudar só lá, não aqui.
-const TIME_SLOTS = generateSlotLabels(30);
 const BOOKABLE_DAYS = nextNDays(14);
 
 // Fluxo de agendamento: serviço → data/horário → cliente → confirmar. O
@@ -35,6 +33,8 @@ export function BookingDrawer({
   services,
   professionals,
   appointments,
+  businessHours,
+  professionalTimeOff,
   initialDate,
   autoOpen = false,
 }: {
@@ -42,6 +42,10 @@ export function BookingDrawer({
   professionals: Professional[];
   /** Agendamentos do dia que a Agenda está mostrando agora (mesmo dia de `initialDate`) — usado como ponto de partida antes de qualquer troca de dia dentro do drawer. */
   appointments: Appointment[];
+  /** As 7 linhas de horário de funcionamento do negócio (ver migration 0011_business_hours.sql) — cada um dos 14 dias oferecidos pode ter uma janela diferente, ou estar fechado. */
+  businessHours: BusinessHours[];
+  /** Folgas/bloqueios de cada profissional (ver migration 0012_professional_time_off.sql) — somam da lista de horários oferecidos. */
+  professionalTimeOff: ProfessionalTimeOff[];
   /** "YYYY-MM-DD" do dia que a Agenda está mostrando agora — vira o dia pré-selecionado ao abrir um novo agendamento. Sem isso, cai em hoje. */
   initialDate?: string;
   autoOpen?: boolean;
@@ -266,10 +270,20 @@ export function BookingDrawer({
                     <p className="text-xs text-paper-500">Carregando horários...</p>
                   ) : (
                     (() => {
-                      const freeSlots = TIME_SLOTS.filter(
+                      const dayWindow = getDayWindow(businessHours, selectedDate);
+                      if (dayWindow.closed) {
+                        return (
+                          <p className="text-sm text-paper-400">
+                            Fechado nesse dia. Escolha outro dia ali em cima.
+                          </p>
+                        );
+                      }
+                      const daySlots = generateSlotLabels(dayWindow, 30);
+                      const freeSlots = daySlots.filter(
                         (t) =>
-                          slotFitsBeforeClosing(t, service.durationMinutes) &&
-                          isSlotFree(selectedDate, t, service.durationMinutes, professional.id, dayAppointments)
+                          slotFitsBeforeClosing(t, service.durationMinutes, dayWindow) &&
+                          isSlotFree(selectedDate, t, service.durationMinutes, professional.id, dayAppointments) &&
+                          !isSlotBlocked(selectedDate, t, service.durationMinutes, professional.id, professionalTimeOff)
                       );
                       if (freeSlots.length === 0) {
                         return (

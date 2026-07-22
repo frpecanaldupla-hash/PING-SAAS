@@ -3,12 +3,11 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Appointment, Client, Professional, Service } from "@/lib/types";
+import type { Appointment, BusinessHours, Client, Professional, Service } from "@/lib/types";
 import {
   hourMarks,
   minutesToLabel,
-  AGENDA_START_MIN,
-  AGENDA_SPAN_MIN,
+  getDayWindow,
   clampAndSnapMinutes,
   parseLocalDateOnly,
   formatLocalDateOnly,
@@ -24,6 +23,7 @@ export function AgendaGrid({
   appointments,
   clients,
   services,
+  businessHours,
   currentUserId,
   selectedDate,
 }: {
@@ -31,17 +31,22 @@ export function AgendaGrid({
   appointments: Appointment[];
   clients: Pick<Client, "id" | "name">[];
   services: Service[];
+  /** As 7 linhas de horário de funcionamento do negócio (ver migration 0011_business_hours.sql) — a grade resolve a janela do dia sendo visto a partir daqui. */
+  businessHours: BusinessHours[];
   currentUserId?: string;
   /** Dia sendo visto, "YYYY-MM-DD" (ver app/agenda/page.tsx) — controla a navegação de data no topo da grade. */
   selectedDate: string;
 }) {
   const router = useRouter();
-  const marks = hourMarks();
-  const rowCount = marks.length - 1;
   // Convertido pra meia-noite LOCAL (fuso do navegador) assim que chega —
   // dali em diante só se usa Date/setDate/setHours locais, nunca UTC (ver
   // comentário no topo de lib/agenda/time.ts sobre por que essa fronteira importa).
   const selectedDateOnly = parseLocalDateOnly(selectedDate);
+  // Chamado `dayWindow`, não `window` — este componente roda no navegador e
+  // `window` sombrearia o objeto global do DOM no escopo da função.
+  const dayWindow = getDayWindow(businessHours, selectedDateOnly);
+  const marks = dayWindow.closed ? [] : hourMarks(dayWindow);
+  const rowCount = Math.max(marks.length - 1, 0);
 
   function goToDate(dateOnly: Date) {
     router.push(`/agenda?data=${formatLocalDateOnly(dateOnly)}`);
@@ -99,15 +104,19 @@ export function AgendaGrid({
 
     const appointmentId = e.dataTransfer.getData("text/plain");
     const durationMin = Number(e.dataTransfer.getData("application/x-duration-min"));
-    if (!appointmentId || !durationMin) return;
+    // dayWindow.closed nunca deveria chegar aqui — as colunas de drop nem
+    // renderizam num dia fechado (ver JSX abaixo) — mas a checagem é barata
+    // e evita um drop fantasma se o estado mudar no meio do gesto.
+    if (!appointmentId || !durationMin || dayWindow.closed) return;
 
     // Converte a posição Y do mouse dentro da coluna em minutos desde
-    // 00:00, dentro da janela de funcionamento — mesma lógica inversa de
-    // blockPosition() em lib/agenda/time.ts.
+    // 00:00, dentro da janela de funcionamento do dia — mesma lógica
+    // inversa de blockPosition() em lib/agenda/time.ts.
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientY - rect.top) / rect.height;
-    const rawMinutes = AGENDA_START_MIN + Math.min(Math.max(ratio, 0), 1) * AGENDA_SPAN_MIN;
-    const startMinutes = clampAndSnapMinutes(rawMinutes, durationMin);
+    const span = dayWindow.endMin - dayWindow.startMin;
+    const rawMinutes = dayWindow.startMin + Math.min(Math.max(ratio, 0), 1) * span;
+    const startMinutes = clampAndSnapMinutes(rawMinutes, durationMin, dayWindow);
 
     // Precisa ser o dia que está sendo VISUALIZADO (selectedDateOnly), não
     // "hoje" — senão arrastar um bloco num dia futuro silenciosamente
@@ -163,6 +172,11 @@ export function AgendaGrid({
         </div>
       </div>
 
+      {dayWindow.closed ? (
+        <Card className="p-10 text-center">
+          <p className="text-paper-400 text-sm">Fechado nesse dia.</p>
+        </Card>
+      ) : (
       <Card className="overflow-hidden">
       {dragError && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-danger text-white text-xs font-medium px-3 py-2 rounded-sm shadow-lg animate-rise">
@@ -170,7 +184,7 @@ export function AgendaGrid({
         </div>
       )}
       {isMoving && (
-        <div className="absolute top-2 right-2 z-10 bg-ink-800 text-paper-300 text-[11px] font-medium px-2.5 py-1.5 rounded-sm">
+        <div className="absolute top-2 right-2 z-10 bg-ink-800 text-paper-100 text-[11px] font-medium px-2.5 py-1.5 rounded-sm">
           Movendo...
         </div>
       )}
@@ -242,6 +256,7 @@ export function AgendaGrid({
                     appointment={a}
                     client={clients.find((c) => c.id === a.clientId)}
                     services={services}
+                    dayWindow={dayWindow}
                     isDragging={draggedId === a.id}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
@@ -252,6 +267,7 @@ export function AgendaGrid({
         ))}
       </div>
       </Card>
+      )}
     </div>
   );
 }

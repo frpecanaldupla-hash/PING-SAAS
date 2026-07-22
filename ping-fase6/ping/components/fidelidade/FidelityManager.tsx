@@ -2,12 +2,23 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Pencil, Check, Search, Gift, PartyPopper } from "lucide-react";
-import { updateFidelityConfig, searchFidelityClients, redeemReward } from "@/app/fidelidade/actions";
+import {
+  updateFidelityConfig,
+  searchFidelityClients,
+  redeemReward,
+  setClientBlocked,
+} from "@/app/fidelidade/actions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 
-type ClientRow = { id: string; name: string; points: number; totalVisits: number };
+type ClientRow = {
+  id: string;
+  name: string;
+  points: number;
+  totalVisits: number;
+  blockedAt: string | null;
+};
 
 export function FidelityManager({
   visitsRequired: initialVisitsRequired,
@@ -31,6 +42,7 @@ export function FidelityManager({
   const [isRedeeming, startRedeem] = useTransition();
   const [redeemError, setRedeemError] = useState<string | null>(null);
   const [justRedeemed, setJustRedeemed] = useState<string | null>(null);
+  const [isBlocking, startBlocking] = useTransition();
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -73,6 +85,37 @@ export function FidelityManager({
       );
       setJustRedeemed(result.name ?? client.name);
       setTimeout(() => setJustRedeemed(null), 3000);
+    });
+  }
+
+  // Bloquear é a ação com consequência real (cliente para de conseguir
+  // agendar sozinho) — pede confirmação, no mesmo padrão de
+  // TransactionRow.handleCancel. Desbloquear é só reverter, sem risco.
+  function handleToggleBlock(client: ClientRow) {
+    const willBlock = !client.blockedAt;
+    if (
+      willBlock &&
+      !window.confirm(
+        `Bloquear ${client.name}? Ele não vai conseguir criar novos agendamentos pela Área do Cliente até você desbloquear.`
+      )
+    ) {
+      return;
+    }
+
+    const previousBlockedAt = client.blockedAt;
+    setClients((prev) =>
+      prev.map((c) =>
+        c.id === client.id ? { ...c, blockedAt: willBlock ? new Date().toISOString() : null } : c
+      )
+    );
+
+    startBlocking(async () => {
+      const result = await setClientBlocked(client.id, willBlock);
+      if (result.error) {
+        setClients((prev) =>
+          prev.map((c) => (c.id === client.id ? { ...c, blockedAt: previousBlockedAt } : c))
+        );
+      }
     });
   }
 
@@ -173,7 +216,14 @@ export function FidelityManager({
                   className="flex items-center gap-4 px-4 py-3 rounded-sm border border-ink-700"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{c.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate">{c.name}</p>
+                      {c.blockedAt && (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-danger bg-danger/10 border border-danger/30 rounded-full px-2 py-0.5">
+                          Bloqueado
+                        </span>
+                      )}
+                    </div>
                     <div className="h-1.5 rounded-full bg-ink-800 overflow-hidden mt-2 max-w-[180px]">
                       <div
                         className={`h-full rounded-full transition-all ${canRedeem ? "bg-gradient-to-r from-signal-500 to-signal-400" : "bg-gradient-to-r from-brass-500 to-brass-400"}`}
@@ -184,13 +234,22 @@ export function FidelityManager({
                       {c.points} de {visitsRequired} carimbos
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleRedeem(c)}
-                    disabled={!canRedeem || isRedeeming}
-                    className="shrink-0 px-3.5 py-2 rounded-sm text-xs font-semibold transition-colors bg-signal-500 hover:bg-signal-400 disabled:bg-ink-800 disabled:text-paper-500 disabled:cursor-not-allowed text-ink-950"
-                  >
-                    Resgatar
-                  </button>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleRedeem(c)}
+                      disabled={!canRedeem || isRedeeming}
+                      className="px-3.5 py-2 rounded-sm text-xs font-semibold transition-colors bg-signal-500 hover:bg-signal-400 disabled:bg-ink-800 disabled:text-paper-500 disabled:cursor-not-allowed text-ink-950"
+                    >
+                      Resgatar
+                    </button>
+                    <button
+                      onClick={() => handleToggleBlock(c)}
+                      disabled={isBlocking}
+                      className="text-[10px] text-paper-500 hover:text-danger transition-colors disabled:opacity-50"
+                    >
+                      {c.blockedAt ? "Desbloquear" : "Bloquear"}
+                    </button>
+                  </div>
                 </li>
               );
             })}

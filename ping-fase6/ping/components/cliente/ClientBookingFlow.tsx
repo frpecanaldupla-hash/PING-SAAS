@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
-import type { Service, Appointment } from "@/lib/types";
+import type { Service, Appointment, BusinessHours, Professional, ProfessionalTimeOff } from "@/lib/types";
 import { createMyAppointment, getAvailability } from "@/app/cliente/agendar/actions";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/Input";
 import {
   generateSlotLabels,
   slotFitsBeforeClosing,
+  getDayWindow,
+  isSlotBlocked,
   nextNDays,
   dayChipLabel,
   parseLocalDateOnly,
@@ -22,27 +24,37 @@ import {
 type Step = "service" | "time" | "notes" | "confirm" | "done";
 type DayAppointment = Pick<Appointment, "professionalId" | "status" | "startAt" | "endAt">;
 
-const TIME_SLOTS = generateSlotLabels(30);
 const BOOKABLE_DAYS = nextNDays(14);
 
+type ChosenProfessional = Pick<Professional, "id" | "name">;
+
 // Fluxo de agendamento da Área do Cliente: serviço → dia/horário →
-// observação → confirmar. De propósito SEM passo de escolher profissional
-// (o cliente logado não deveria ver a equipe em detalhe) — pro horário
-// escolhido, usa o primeiro profissional ativo que estiver livre; quem
-// atende de fato o dono decide na Agenda, isso aqui só reserva o horário.
+// observação → confirmar. Escolher profissional é opcional (chip bar acima
+// dos passos, mesmo padrão do BookingDrawer da equipe) — "Sem preferência"
+// é o padrão e preserva o comportamento antigo: usa o primeiro profissional
+// ativo que estiver livre no horário escolhido.
 export function ClientBookingFlow({
   services,
-  professionalIds,
+  professionals,
+  businessHours,
+  professionalTimeOff,
   initialDate,
   initialAppointments,
 }: {
   services: Service[];
-  professionalIds: string[];
+  professionals: ChosenProfessional[];
+  /** As 7 linhas de horário de funcionamento do negócio (ver migration 0011_business_hours.sql). */
+  businessHours: BusinessHours[];
+  /** Folgas/bloqueios de cada profissional (ver migration 0012_professional_time_off.sql) — um profissional bloqueado nesse horário não entra na escolha automática/manual abaixo. */
+  professionalTimeOff: ProfessionalTimeOff[];
   /** "YYYY-MM-DD" de hoje, calculado no servidor (Brasília) — ponto de partida dos chips de dia. */
   initialDate: string;
   initialAppointments: DayAppointment[];
 }) {
   const [step, setStep] = useState<Step>("service");
+  // null = "Sem preferência" — o padrão. Um profissional específico aqui
+  // restringe firstFreeProfessional a só ele, em vez de escolher entre todos.
+  const [professional, setProfessional] = useState<ChosenProfessional | null>(null);
   const [service, setService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(() => parseLocalDateOnly(initialDate));
   const [dayAppointments, setDayAppointments] = useState<DayAppointment[]>(initialAppointments);
@@ -64,7 +76,14 @@ export function ClientBookingFlow({
   }
 
   function firstFreeProfessional(slot: string, durationMinutes: number) {
-    return professionalIds.find((id) => isSlotFree(selectedDate, slot, durationMinutes, id, dayAppointments)) ?? null;
+    const candidateIds = professional ? [professional.id] : professionals.map((p) => p.id);
+    return (
+      candidateIds.find(
+        (id) =>
+          isSlotFree(selectedDate, slot, durationMinutes, id, dayAppointments) &&
+          !isSlotBlocked(selectedDate, slot, durationMinutes, id, professionalTimeOff)
+      ) ?? null
+    );
   }
 
   function confirm() {
@@ -93,6 +112,37 @@ export function ClientBookingFlow({
 
   return (
     <Card className="p-6">
+      {/* Escolha de profissional — só faz sentido mostrar se houver mais de
+          um; com um único profissional ativo não existe escolha real, e
+          "Sem preferência" sozinho ao lado do nome dele só confundiria. */}
+      {professionals.length > 1 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 -mx-1 px-1 border-b border-ink-800">
+          <button
+            onClick={() => setProfessional(null)}
+            className={`px-3 py-1.5 rounded-full text-xs border shrink-0 transition-all ${
+              professional === null
+                ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                : "border-ink-700 text-paper-400 font-medium hover:text-paper-50 hover:border-paper-500"
+            }`}
+          >
+            Sem preferência
+          </button>
+          {professionals.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setProfessional(p)}
+              className={`px-3 py-1.5 rounded-full text-xs border shrink-0 transition-all ${
+                professional?.id === p.id
+                  ? "bg-gradient-to-br from-signal-400 to-signal-500 border-transparent text-ink-950 font-semibold shadow-[0_0_16px_rgba(232,67,47,0.35)]"
+                  : "border-ink-700 text-paper-400 font-medium hover:text-paper-50 hover:border-paper-500"
+              }`}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {step === "service" && (
         <div className="space-y-3 animate-rise">
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-1">
@@ -154,9 +204,18 @@ export function ClientBookingFlow({
             <p className="text-xs text-paper-500">Carregando horários...</p>
           ) : (
             (() => {
-              const freeSlots = TIME_SLOTS.filter(
+              const dayWindow = getDayWindow(businessHours, selectedDate);
+              if (dayWindow.closed) {
+                return (
+                  <p className="text-sm text-paper-400">
+                    Fechado nesse dia. Escolha outro dia ali em cima.
+                  </p>
+                );
+              }
+              const daySlots = generateSlotLabels(dayWindow, 30);
+              const freeSlots = daySlots.filter(
                 (t) =>
-                  slotFitsBeforeClosing(t, service.durationMinutes) &&
+                  slotFitsBeforeClosing(t, service.durationMinutes, dayWindow) &&
                   firstFreeProfessional(t, service.durationMinutes) !== null
               );
               if (freeSlots.length === 0) {
@@ -225,7 +284,10 @@ export function ClientBookingFlow({
           <p className="text-xs uppercase tracking-wide text-paper-500 mb-4">4 de 4 · Confirmar</p>
           <p className="text-xs text-paper-500 mb-1">{dayChipLabel(selectedDate)}</p>
           <p className="font-display text-3xl tracking-wide mb-2">{time}</p>
-          <p className="text-paper-400 mb-1">{service.name}</p>
+          <p className="text-paper-400 mb-1">
+            {service.name}
+            {professional ? ` · ${professional.name}` : ""}
+          </p>
           {notes && <p className="text-paper-500 text-xs mb-6 max-w-xs">&ldquo;{notes}&rdquo;</p>}
 
           {saveError && <p className="text-danger text-xs mb-4">{saveError}</p>}
@@ -244,7 +306,8 @@ export function ClientBookingFlow({
           />
           <p className="font-display text-3xl tracking-wide mb-2">Agendado!</p>
           <p className="text-paper-400 mb-8">
-            {service.name} · {dayChipLabel(selectedDate).toLowerCase()} às {time}.
+            {service.name} · {dayChipLabel(selectedDate).toLowerCase()} às {time}
+            {professional ? ` com ${professional.name}` : ""}.
           </p>
           {/* <a> de propósito (não next/link): recarrega a página inteira e
               garante que /cliente volte com os dados frescos do agendamento. */}

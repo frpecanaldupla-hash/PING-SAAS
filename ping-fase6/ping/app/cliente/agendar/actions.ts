@@ -73,11 +73,20 @@ export async function createMyAppointment(input: {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, business_id")
+    .select("id, business_id, blocked_at")
     .eq("id", clientId)
     .maybeSingle();
 
   if (!client) return { error: "Cadastro não encontrado." };
+
+  // Cliente bloqueado (ver migration 0014_client_blocked.sql) não cria
+  // agendamento novo por aqui — a equipe continua podendo agendar por ele
+  // manualmente pela Agenda (createAppointment, sem essa checagem).
+  if (client.blocked_at) {
+    return {
+      error: "Sua conta está temporariamente impedida de criar novos agendamentos. Fale com a barbearia.",
+    };
+  }
 
   const { data: service } = await supabase
     .from("services")

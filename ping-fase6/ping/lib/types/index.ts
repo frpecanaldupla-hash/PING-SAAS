@@ -9,6 +9,41 @@ export interface Business {
   slug: string;
   logoUrl: string | null;
   createdAt: string;
+  address: string | null;
+  mapsUrl: string | null;
+  hasWifi: boolean;
+  hasKidsArea: boolean;
+  hasParking: boolean;
+  hasAccessibility: boolean;
+}
+
+// weekday segue Date.getDay(): 0=domingo .. 6=sábado — ver migration
+// 0011_business_hours.sql.
+export interface BusinessHours {
+  businessId: string;
+  weekday: number;
+  opensAt: string; // "HH:MM"
+  closesAt: string;
+  closed: boolean;
+}
+
+export type TimeOffKind = "recurring" | "date";
+
+// kind="recurring" usa weekday (start/end nulos = dia inteiro bloqueado,
+// ex: dia de folga fixo); kind="date" usa date pra um bloqueio pontual (ex:
+// consulta médica). Nunca os dois preenchidos ao mesmo tempo — ver o CHECK
+// em migration 0012_professional_time_off.sql.
+export interface ProfessionalTimeOff {
+  id: string;
+  businessId: string;
+  professionalId: string;
+  kind: TimeOffKind;
+  weekday: number | null;
+  date: string | null; // "YYYY-MM-DD"
+  startTime: string | null; // "HH:MM", null = dia inteiro
+  endTime: string | null;
+  label: string | null;
+  createdAt: string;
 }
 
 export interface Service {
@@ -44,6 +79,7 @@ export interface Client {
   lastVisitAt: string | null;
   qrToken: string; // token único usado no QR Code da Área do Cliente
   createdAt: string;
+  blockedAt: string | null; // null = não bloqueado — ver migration 0014_client_blocked.sql
 }
 
 export interface FidelityConfig {

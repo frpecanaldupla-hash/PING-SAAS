@@ -39,10 +39,10 @@ export const MOCK_PROFESSIONALS: Professional[] = [
 ];
 
 export const MOCK_CLIENTS: Client[] = [
-  { id: "c1", businessId: MOCK_BUSINESS_ID, name: "João Silva", phone: "11987654321", birthday: null, points: 245, totalVisits: 12, lastVisitAt: "2026-07-10", qrToken: "qr-c1", createdAt: "2025-01-10" },
-  { id: "c2", businessId: MOCK_BUSINESS_ID, name: "Maria Oliveira", phone: "11912345678", birthday: birthdayToday(), points: 890, totalVisits: 21, lastVisitAt: "2026-07-15", qrToken: "qr-c2", createdAt: "2024-11-02" },
-  { id: "c3", businessId: MOCK_BUSINESS_ID, name: "Pedro Souza", phone: "11976543210", birthday: null, points: 60, totalVisits: 3, lastVisitAt: daysAgo(35), qrToken: "qr-c3", createdAt: "2025-06-01" },
-  { id: "c4", businessId: MOCK_BUSINESS_ID, name: "Ana Costa", phone: "11965432109", birthday: null, points: 310, totalVisits: 8, lastVisitAt: daysAgo(45), qrToken: "qr-c4", createdAt: "2025-03-15" },
+  { id: "c1", businessId: MOCK_BUSINESS_ID, name: "João Silva", phone: "11987654321", birthday: null, points: 245, totalVisits: 12, lastVisitAt: "2026-07-10", qrToken: "qr-c1", createdAt: "2025-01-10", blockedAt: null },
+  { id: "c2", businessId: MOCK_BUSINESS_ID, name: "Maria Oliveira", phone: "11912345678", birthday: birthdayToday(), points: 890, totalVisits: 21, lastVisitAt: "2026-07-15", qrToken: "qr-c2", createdAt: "2024-11-02", blockedAt: null },
+  { id: "c3", businessId: MOCK_BUSINESS_ID, name: "Pedro Souza", phone: "11976543210", birthday: null, points: 60, totalVisits: 3, lastVisitAt: daysAgo(35), qrToken: "qr-c3", createdAt: "2025-06-01", blockedAt: null },
+  { id: "c4", businessId: MOCK_BUSINESS_ID, name: "Ana Costa", phone: "11965432109", birthday: null, points: 310, totalVisits: 8, lastVisitAt: daysAgo(45), qrToken: "qr-c4", createdAt: "2025-03-15", blockedAt: null },
 ];
 
 export const MOCK_FIDELITY_CONFIG: FidelityConfig = {

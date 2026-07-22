@@ -36,7 +36,7 @@ export default async function FidelidadePage() {
       .maybeSingle(),
     supabase
       .from("clients")
-      .select("id, name, points, total_visits")
+      .select("id, name, points, total_visits, blocked_at")
       .eq("business_id", business.id)
       .order("points", { ascending: false })
       .limit(30),
@@ -47,6 +47,7 @@ export default async function FidelidadePage() {
     name: c.name,
     points: c.points,
     totalVisits: c.total_visits,
+    blockedAt: c.blocked_at,
   }));
 
   return (

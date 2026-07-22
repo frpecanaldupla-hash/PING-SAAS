@@ -139,6 +139,21 @@ export function LoginFlow() {
           </Card>
         )}
 
+        {step === "phone" && (
+          <p
+            className="text-center text-sm text-paper-500 mt-5 animate-rise"
+            style={{ animationDelay: "0.12s" }}
+          >
+            Ainda não é cliente em lugar nenhum?{" "}
+            <Link
+              href="/cliente/buscar"
+              className="text-signal-400 font-semibold hover:text-signal-300 transition-colors"
+            >
+              Encontre sua barbearia
+            </Link>
+          </p>
+        )}
+
         {step === "choose" && (
           <Card className="animate-rise">
             <div className="p-6 space-y-3">

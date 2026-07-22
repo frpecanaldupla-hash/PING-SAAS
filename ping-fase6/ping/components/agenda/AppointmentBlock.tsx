@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Appointment, Client, Service } from "@/lib/types";
-import { blockPosition, timeLabel } from "@/lib/agenda/time";
+import { blockPosition, timeLabel, type DayWindow } from "@/lib/agenda/time";
 import { CompleteAppointmentModal } from "./CompleteAppointmentModal";
 
 const STATUS_STYLE: Record<Appointment["status"], string> = {
@@ -22,6 +22,7 @@ export function AppointmentBlock({
   appointment,
   client,
   services,
+  dayWindow,
   isDragging,
   onDragStart,
   onDragEnd,
@@ -29,11 +30,13 @@ export function AppointmentBlock({
   appointment: Appointment;
   client?: Pick<Client, "name">;
   services: Service[];
+  /** Janela de funcionamento do dia sendo exibido (ver lib/agenda/time.ts) — todo bloco renderizado na mesma coluna compartilha a mesma janela, já que a grade mostra sempre um único dia. */
+  dayWindow: DayWindow;
   isDragging?: boolean;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>, appointment: Appointment) => void;
   onDragEnd?: () => void;
 }) {
-  const { top, height } = blockPosition(appointment.startAt, appointment.endAt);
+  const { top, height } = blockPosition(appointment.startAt, appointment.endAt, dayWindow);
  const serviceNames = services
       .filter((s) => appointment.serviceIds.includes(s.id))
       .map((s) => s.name)

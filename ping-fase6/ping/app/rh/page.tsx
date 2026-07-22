@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
-import type { Appointment, Professional } from "@/lib/types";
+import type { Appointment, Professional, ProfessionalTimeOff } from "@/lib/types";
 
 // Substitui MOCK_PROFESSIONALS / MOCK_APPOINTMENTS pelo negócio de quem
 // está logado. Ao contrário da Agenda (que só busca profissionais ativos,
@@ -32,7 +32,7 @@ export default async function RhPage() {
 
   const { startOfToday, startOfTomorrow } = brasiliaDayRangeISO();
 
-  const [{ data: profRows }, { data: apptRows }] = await Promise.all([
+  const [{ data: profRows }, { data: apptRows }, { data: timeOffRows }] = await Promise.all([
     supabase
       .from("professionals")
       .select("id, business_id, user_id, name, avatar_url, role, active, commission_percent")
@@ -44,6 +44,10 @@ export default async function RhPage() {
       .eq("status", "completed")
       .gte("start_at", startOfToday)
       .lt("start_at", startOfTomorrow),
+    supabase
+      .from("professional_time_off")
+      .select("id, business_id, professional_id, kind, weekday, date, start_time, end_time, label, created_at")
+      .eq("business_id", business.id),
   ]);
 
   const professionals: Professional[] = (profRows ?? []).map((p) => ({
@@ -71,6 +75,21 @@ export default async function RhPage() {
     createdAt: a.created_at,
   }));
 
+  // slice(0,5): a coluna `time` do Postgres volta como "HH:MM:SS" — os
+  // <input type="time"> do editor de bloqueios trabalham com "HH:MM".
+  const timeOff: ProfessionalTimeOff[] = (timeOffRows ?? []).map((t) => ({
+    id: t.id,
+    businessId: t.business_id,
+    professionalId: t.professional_id,
+    kind: t.kind,
+    weekday: t.weekday,
+    date: t.date,
+    startTime: t.start_time ? t.start_time.slice(0, 5) : null,
+    endTime: t.end_time ? t.end_time.slice(0, 5) : null,
+    label: t.label,
+    createdAt: t.created_at,
+  }));
+
   return (
     <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
       <Atmosphere />
@@ -79,7 +98,7 @@ export default async function RhPage() {
         <PageHeader title="Equipe" subtitle={business.name} />
 
         <main className="px-5 lg:px-10 py-8 max-w-5xl mx-auto">
-          <TeamManager professionals={professionals} appointments={appointments} />
+          <TeamManager professionals={professionals} appointments={appointments} timeOff={timeOff} />
         </main>
       </div>
     </div>

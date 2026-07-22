@@ -13,7 +13,7 @@ import {
   parseDateOnlyISO,
   todayDateOnly,
 } from "@/lib/time/brasilia";
-import type { Appointment, Client, Professional, Service } from "@/lib/types";
+import type { Appointment, BusinessHours, Client, Professional, ProfessionalTimeOff, Service } from "@/lib/types";
 
 // Substitui os MOCK_* pelo negócio de quem está logado. Uma conta nova
 // começa com o dono como único profissional (criado em
@@ -51,29 +51,43 @@ export default async function AgendaPage({
   const selectedDateISO = formatDateOnlyISO(selectedDate);
   const selectedDateLabel = dateOnlyLabel(selectedDate);
 
-  const [{ data: profRows }, { data: serviceRows }, { data: apptRows }, { data: clientRows }] =
-    await Promise.all([
-      supabase
-        .from("professionals")
-        .select("id, business_id, user_id, name, avatar_url, role, active, commission_percent")
-        .eq("business_id", business.id)
-        .eq("active", true),
-      supabase
-        .from("services")
-        .select("id, business_id, name, price, duration_minutes, is_combo, combo_service_ids, active")
-        .eq("business_id", business.id)
-        .eq("active", true),
-      supabase
-        .from("appointments")
-        .select("id, business_id, client_id, professional_id, service_ids, start_at, end_at, status, total_price, notes, created_at")
-        .eq("business_id", business.id)
-        .gte("start_at", startOfToday)
-        .lt("start_at", startOfTomorrow),
-      supabase
-        .from("clients")
-        .select("id, name")
-        .eq("business_id", business.id),
-    ]);
+  const [
+    { data: profRows },
+    { data: serviceRows },
+    { data: apptRows },
+    { data: clientRows },
+    { data: hoursRows },
+    { data: timeOffRows },
+  ] = await Promise.all([
+    supabase
+      .from("professionals")
+      .select("id, business_id, user_id, name, avatar_url, role, active, commission_percent")
+      .eq("business_id", business.id)
+      .eq("active", true),
+    supabase
+      .from("services")
+      .select("id, business_id, name, price, duration_minutes, is_combo, combo_service_ids, active")
+      .eq("business_id", business.id)
+      .eq("active", true),
+    supabase
+      .from("appointments")
+      .select("id, business_id, client_id, professional_id, service_ids, start_at, end_at, status, total_price, notes, created_at")
+      .eq("business_id", business.id)
+      .gte("start_at", startOfToday)
+      .lt("start_at", startOfTomorrow),
+    supabase
+      .from("clients")
+      .select("id, name")
+      .eq("business_id", business.id),
+    supabase
+      .from("business_hours")
+      .select("business_id, weekday, opens_at, closes_at, closed")
+      .eq("business_id", business.id),
+    supabase
+      .from("professional_time_off")
+      .select("id, business_id, professional_id, kind, weekday, date, start_time, end_time, label, created_at")
+      .eq("business_id", business.id),
+  ]);
 
   const professionals: Professional[] = (profRows ?? []).map((p) => ({
     id: p.id,
@@ -113,6 +127,29 @@ export default async function AgendaPage({
 
   const clients: Pick<Client, "id" | "name">[] = clientRows ?? [];
 
+  const businessHours: BusinessHours[] = (hoursRows ?? []).map((h) => ({
+    businessId: h.business_id,
+    weekday: h.weekday,
+    opensAt: h.opens_at,
+    closesAt: h.closes_at,
+    closed: h.closed,
+  }));
+
+  // slice(0,5): a coluna `time` do Postgres volta como "HH:MM:SS" — o tipo
+  // ProfessionalTimeOff.startTime/endTime é "HH:MM" (ver lib/types).
+  const professionalTimeOff: ProfessionalTimeOff[] = (timeOffRows ?? []).map((t) => ({
+    id: t.id,
+    businessId: t.business_id,
+    professionalId: t.professional_id,
+    kind: t.kind,
+    weekday: t.weekday,
+    date: t.date,
+    startTime: t.start_time ? t.start_time.slice(0, 5) : null,
+    endTime: t.end_time ? t.end_time.slice(0, 5) : null,
+    label: t.label,
+    createdAt: t.created_at,
+  }));
+
   // O PageHeader não capitaliza mais o subtítulo por CSS (deformaria nomes
   // de negócio) — a data, que começa minúscula, é capitalizada aqui.
   const dateLabel =
@@ -132,6 +169,8 @@ export default async function AgendaPage({
                 services={services}
                 professionals={professionals}
                 appointments={appointments}
+                businessHours={businessHours}
+                professionalTimeOff={professionalTimeOff}
                 initialDate={selectedDateISO}
                 autoOpen={novo === "1"}
               />
@@ -153,6 +192,7 @@ export default async function AgendaPage({
               appointments={appointments}
               clients={clients}
               services={services}
+              businessHours={businessHours}
               currentUserId={auth.user?.id}
               selectedDate={selectedDateISO}
             />

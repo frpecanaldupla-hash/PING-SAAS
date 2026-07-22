@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, CalendarDays, ScanLine, Scissors,
-  Gift, Users, Wallet, Megaphone, QrCode,
+  Gift, Users, Wallet, Megaphone, QrCode, Settings,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/rh", label: "Equipe", icon: Users },
   { href: "/financeiro", label: "Financeiro", icon: Wallet },
   { href: "/campanhas", label: "Campanhas", icon: Megaphone },
+  { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 // Fundo translúcido de propósito: nas telas que têm <Atmosphere /> atrás

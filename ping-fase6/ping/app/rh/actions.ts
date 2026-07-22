@@ -73,3 +73,72 @@ export async function updateProfessional(
   revalidatePath("/agenda");
   return { error: null };
 }
+
+// Folga/bloqueio de horário de um profissional (ver migration
+// 0012_professional_time_off.sql) — soma da lista de horários oferecidos
+// tanto no BookingDrawer (equipe) quanto no ClientBookingFlow (cliente), via
+// isSlotBlocked em lib/agenda/time.ts. As mesmas regras de consistência do
+// CHECK constraint da tabela são validadas aqui antes de tentar o insert,
+// pra devolver uma mensagem legível em vez do erro cru do Postgres.
+export async function addProfessionalTimeOff(
+  professionalId: string,
+  input: {
+    kind: "recurring" | "date";
+    weekday: number | null;
+    date: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    label: string | null;
+  }
+) {
+  if (input.kind === "recurring" && input.weekday === null) {
+    return { error: "Escolha o dia da semana." };
+  }
+  if (input.kind === "date" && !input.date) {
+    return { error: "Escolha uma data." };
+  }
+  if ((input.startTime && !input.endTime) || (!input.startTime && input.endTime)) {
+    return { error: "Preencha os dois horários, ou deixe os dois em branco pro dia inteiro." };
+  }
+  if (input.startTime && input.endTime && input.startTime >= input.endTime) {
+    return { error: "O horário de início precisa ser antes do de fim." };
+  }
+
+  const supabase = await createClient();
+  const business = await getCurrentBusiness(supabase);
+  if (!business) return { error: "Negócio não encontrado." };
+
+  const { data, error } = await supabase
+    .from("professional_time_off")
+    .insert({
+      business_id: business.id,
+      professional_id: professionalId,
+      kind: input.kind,
+      weekday: input.kind === "recurring" ? input.weekday : null,
+      date: input.kind === "date" ? input.date : null,
+      start_time: input.startTime,
+      end_time: input.endTime,
+      label: input.label,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: "Não foi possível salvar o bloqueio." };
+
+  revalidatePath("/rh");
+  revalidatePath("/agenda");
+  revalidatePath("/cliente/agendar");
+  return { error: null, id: data.id as string };
+}
+
+export async function deleteProfessionalTimeOff(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("professional_time_off").delete().eq("id", id);
+
+  if (error) return { error: "Não foi possível remover o bloqueio." };
+
+  revalidatePath("/rh");
+  revalidatePath("/agenda");
+  revalidatePath("/cliente/agendar");
+  return { error: null };
+}
