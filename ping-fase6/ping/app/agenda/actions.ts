@@ -258,49 +258,60 @@ export async function completeAppointment(
 
   if (!appointment) return { error: "Agendamento não encontrado." };
 
-  const { error: updateError } = await supabase
-    .from("appointments")
-    .update({ status: "completed", total_price: amount })
-    .eq("id", appointmentId);
-
-  if (updateError) return { error: "Não foi possível concluir o agendamento." };
-
   // A maioria dos donos nunca passa pela tela de Check-in separada — pra
   // eles, concluir o pagamento aqui na Agenda É o check-in. Só credita
   // pontos/visita se ainda não tiver sido creditado antes (status
   // "checked_in" significa que já passou pelo QR ou pela busca manual).
-  if (appointment.status !== "checked_in") {
-    const { data: client } = await supabase
-      .from("clients")
-      .select("id, points, total_visits")
-      .eq("id", appointment.client_id)
-      .maybeSingle();
+  const needsCredit = appointment.status !== "checked_in";
 
-    if (client) {
-      await creditVisit(supabase, appointment.business_id, client);
-    }
-  }
+  // As três operações abaixo não dependem uma da outra (só do agendamento já
+  // buscado) — rodavam em série antes, cada uma pagando seu próprio
+  // round-trip ao Postgres. Em paralelo, o tempo total vira o da mais lenta
+  // das três em vez da soma de todas.
+  const [{ error: updateError }, { data: client }, { data: professional }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .update({ status: "completed", total_price: amount })
+      .eq("id", appointmentId),
+    needsCredit
+      ? supabase
+          .from("clients")
+          .select("id, points, total_visits")
+          .eq("id", appointment.client_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("professionals")
+      .select("commission_percent")
+      .eq("id", appointment.professional_id)
+      .maybeSingle(),
+  ]);
 
-  await supabase.from("transactions").insert({
-    business_id: appointment.business_id,
-    appointment_id: appointment.id,
-    professional_id: appointment.professional_id,
-    amount,
-    method,
-    type: "receita",
-  });
+  if (updateError) return { error: "Não foi possível concluir o agendamento." };
 
-  const { data: professional } = await supabase
-    .from("professionals")
-    .select("commission_percent")
-    .eq("id", appointment.professional_id)
-    .maybeSingle();
+  const transactionRows: {
+    business_id: string;
+    appointment_id: string;
+    professional_id: string;
+    amount: number;
+    method: "pix" | "cartao" | "dinheiro";
+    type: "receita" | "comissao";
+  }[] = [
+    {
+      business_id: appointment.business_id,
+      appointment_id: appointment.id,
+      professional_id: appointment.professional_id,
+      amount,
+      method,
+      type: "receita",
+    },
+  ];
 
   if (professional?.commission_percent) {
     const commissionAmount = Number(
       (amount * (professional.commission_percent / 100)).toFixed(2)
     );
-    await supabase.from("transactions").insert({
+    transactionRows.push({
       business_id: appointment.business_id,
       appointment_id: appointment.id,
       professional_id: appointment.professional_id,
@@ -309,6 +320,13 @@ export async function completeAppointment(
       type: "comissao",
     });
   }
+
+  // creditVisit (crédito de pontos) e a inserção das transações também são
+  // independentes entre si — mais um par que não precisa esperar em série.
+  await Promise.all([
+    needsCredit && client ? creditVisit(supabase, appointment.business_id, client) : null,
+    supabase.from("transactions").insert(transactionRows),
+  ]);
 
   revalidatePath("/agenda");
   revalidatePath("/financeiro");
