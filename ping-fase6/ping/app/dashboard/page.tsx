@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   CalendarDays, ScanLine, Scissors,
-  Gift, Users, Wallet, Megaphone, Settings, ArrowRight,
+  Gift, Users, Wallet, Megaphone, Share2, Settings, ArrowRight,
 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -153,6 +153,7 @@ export default async function DashboardPage() {
               <ModuleCard href="/rh" label="Equipe" description="Profissionais e comissões" icon={Users} />
               <ModuleCard href="/financeiro" label="Financeiro" description="Caixa e PIX" icon={Wallet} />
               <ModuleCard href="/campanhas" label="Campanhas" description="Mensagens com IA" icon={Megaphone} />
+              <ModuleCard href="/indicacoes" label="Indicações" description="Indique e ganhe 1 mês grátis" icon={Share2} />
               <ModuleCard href="/configuracoes" label="Configurações" description="Perfil, horários e localização" icon={Settings} />
             </div>
           </section>

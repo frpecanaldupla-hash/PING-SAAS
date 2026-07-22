@@ -47,13 +47,14 @@ export function LoginForm() {
     // o negócio agora, usando o nome guardado em user_metadata no cadastro.
     // A função é idempotente — se o negócio já existe, só retorna o id dele.
     const metadata = data.user?.user_metadata as
-      | { business_name?: string; owner_name?: string }
+      | { business_name?: string; owner_name?: string; referral_code?: string }
       | undefined;
     const businessName = metadata?.business_name || "Meu negócio";
     const ownerName = metadata?.owner_name || "";
     await supabase.rpc("create_business_and_owner", {
       business_name: businessName,
       owner_name: ownerName,
+      p_referral_code: metadata?.referral_code ?? null,
     });
 
     setLoading(false);

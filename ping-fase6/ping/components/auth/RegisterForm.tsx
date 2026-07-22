@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/Input";
 // - Ligado: sem sessão ainda -> mostramos "confira seu e-mail" e o negócio
 //   só é criado no primeiro login bem-sucedido (ver LoginForm.tsx), usando
 //   o nome do negócio guardado em user_metadata durante o signUp.
-export function RegisterForm() {
+export function RegisterForm({ referralCode }: { referralCode?: string } = {}) {
   const router = useRouter();
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
@@ -54,7 +54,7 @@ export function RegisterForm() {
       email,
       password,
       options: {
-        data: { business_name: businessName, owner_name: ownerName },
+        data: { business_name: businessName, owner_name: ownerName, referral_code: referralCode ?? null },
         // Sem isso, o Supabase manda o link padrão dele (ConfirmationURL),
         // que verifica o token assim que qualquer requisição bate nele —
         // inclusive o pré-carregamento de segurança do Gmail/Outlook. Ver
@@ -79,6 +79,7 @@ export function RegisterForm() {
       const { error: rpcError } = await supabase.rpc("create_business_and_owner", {
         business_name: businessName,
         owner_name: ownerName,
+        p_referral_code: referralCode ?? null,
       });
       setLoading(false);
       if (rpcError) {
