@@ -9,6 +9,8 @@ import { Atmosphere } from "@/components/ui/Atmosphere";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PlanPicker } from "@/components/billing/PlanPicker";
+import type { PlanId } from "@/lib/billing/plans";
 
 // Cadastro real via Supabase Auth. O negócio (tabela `businesses`) e o
 // vínculo de dono (`business_members`) são criados pela função de banco
@@ -25,6 +27,7 @@ import { Input } from "@/components/ui/Input";
 //   o nome do negócio guardado em user_metadata durante o signUp.
 export function RegisterForm({ referralCode }: { referralCode?: string } = {}) {
   const router = useRouter();
+  const [plan, setPlan] = useState<PlanId>("mensal");
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
@@ -54,7 +57,12 @@ export function RegisterForm({ referralCode }: { referralCode?: string } = {}) {
       email,
       password,
       options: {
-        data: { business_name: businessName, owner_name: ownerName, referral_code: referralCode ?? null },
+        data: {
+          business_name: businessName,
+          owner_name: ownerName,
+          referral_code: referralCode ?? null,
+          plan,
+        },
         // Sem isso, o Supabase manda o link padrão dele (ConfirmationURL),
         // que verifica o token assim que qualquer requisição bate nele —
         // inclusive o pré-carregamento de segurança do Gmail/Outlook. Ver
@@ -80,6 +88,7 @@ export function RegisterForm({ referralCode }: { referralCode?: string } = {}) {
         business_name: businessName,
         owner_name: ownerName,
         p_referral_code: referralCode ?? null,
+        p_plan: plan,
       });
       setLoading(false);
       if (rpcError) {
@@ -126,7 +135,7 @@ export function RegisterForm({ referralCode }: { referralCode?: string } = {}) {
     <div className="relative min-h-screen flex items-center justify-center bg-ink-950 text-paper-50 px-6 overflow-x-hidden">
       <Atmosphere />
 
-      <div className="relative z-10 w-full max-w-sm py-12">
+      <div className="relative z-10 w-full max-w-2xl py-12">
         <div className="flex flex-col items-center mb-8 animate-rise">
           <Link href="/" className="flex flex-col items-center">
             <PingMark size={88} />
@@ -135,7 +144,14 @@ export function RegisterForm({ referralCode }: { referralCode?: string } = {}) {
           <p className="text-paper-500 text-sm mt-1">Crie a conta do seu negócio</p>
         </div>
 
-        <Card className="animate-rise">
+        <div className="mb-6 animate-rise">
+          <p className="text-xs uppercase tracking-wide text-paper-500 mb-3 text-center">
+            Escolha seu plano — 7 dias grátis, sem cartão agora
+          </p>
+          <PlanPicker value={plan} onChange={setPlan} />
+        </div>
+
+        <Card className="animate-rise max-w-sm mx-auto">
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <Input
               id="businessName"

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
+import { assertClientLimitOk } from "@/lib/billing/limits";
 import { brasiliaDayRangeISO, parseDateOnlyISO } from "@/lib/time/brasilia";
 import type { Appointment } from "@/lib/types";
 
@@ -139,6 +140,9 @@ export async function createAppointment(input: {
     if (existing) {
       clientId = existing.id;
     } else {
+      const limit = await assertClientLimitOk(supabase, business.id);
+      if (!limit.ok) return { error: limit.error };
+
       const { data: created, error: clientError } = await supabase
         .from("clients")
         .insert({ business_id: business.id, name, phone: phoneDigits })
