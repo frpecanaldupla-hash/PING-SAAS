@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { X, Check } from "lucide-react";
-import { completeAppointment } from "@/app/agenda/actions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -17,29 +16,29 @@ export function CompleteAppointmentModal({
   appointmentId,
   suggestedAmount,
   onClose,
+  onConfirm,
   onDone,
 }: {
   appointmentId: string;
   suggestedAmount: number;
   onClose: () => void;
+  /** Dispara a conclusão de forma otimista (ver AgendaGrid) — não espera o
+      servidor responder, então o modal já pode fechar em seguida. */
+  onConfirm: (appointmentId: string, amount: number, method: "pix" | "cartao" | "dinheiro") => void;
   onDone: () => void;
 }) {
   const [amount, setAmount] = useState(String(suggestedAmount));
   const [method, setMethod] = useState<"pix" | "cartao" | "dinheiro">("pix");
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   function confirm() {
     const value = Number(amount.replace(",", "."));
-    setError(null);
-    startTransition(async () => {
-      const result = await completeAppointment(appointmentId, value, method);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      onDone();
-    });
+    if (!value || value <= 0) {
+      setError("Informe um valor válido.");
+      return;
+    }
+    onConfirm(appointmentId, value, method);
+    onDone();
   }
 
   return (
@@ -84,8 +83,8 @@ export function CompleteAppointmentModal({
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
-        <Button onClick={confirm} disabled={isPending} className="w-full">
-          <Check size={16} /> {isPending ? "Salvando..." : "Confirmar conclusão"}
+        <Button onClick={confirm} className="w-full">
+          <Check size={16} /> Confirmar conclusão
         </Button>
       </Card>
     </div>

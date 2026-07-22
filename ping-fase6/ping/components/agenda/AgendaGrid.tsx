@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Appointment, BusinessHours, Client, Professional, Service } from "@/lib/types";
@@ -15,7 +15,7 @@ import {
 } from "@/lib/agenda/time";
 import { AppointmentBlock } from "./AppointmentBlock";
 import { ProfessionalName } from "./ProfessionalName";
-import { moveAppointment } from "@/app/agenda/actions";
+import { completeAppointment, moveAppointment } from "@/app/agenda/actions";
 import { Card } from "@/components/ui/Card";
 
 export function AgendaGrid({
@@ -65,6 +65,37 @@ export function AgendaGrid({
   const [hoverProfessionalId, setHoverProfessionalId] = useState<string | null>(null);
   const [dragError, setDragError] = useState<string | null>(null);
   const [isMoving, startMove] = useTransition();
+
+  // Optimista de propósito: "Concluir agendamento" hoje faz várias idas ao
+  // banco (ver completeAppointment em app/agenda/actions.ts) — em vez de
+  // travar o bloco até tudo voltar, ele já vira "completed" na tela assim
+  // que o dono confirma. O estado real (appointments, vindo do servidor)
+  // reassume sozinho quando o revalidatePath da action refletir na próxima
+  // renderização — React descarta o valor otimista nesse momento.
+  const [optimisticAppointments, setOptimisticAppointments] = useOptimistic(
+    appointments,
+    (state, update: { id: string; totalPrice: number }) =>
+      state.map((a) =>
+        a.id === update.id ? { ...a, status: "completed" as const, totalPrice: update.totalPrice } : a
+      )
+  );
+  const [completeError, setCompleteError] = useState<string | null>(null);
+  const [isCompleting, startComplete] = useTransition();
+
+  function handleCompleteAppointment(
+    appointmentId: string,
+    amount: number,
+    method: "pix" | "cartao" | "dinheiro"
+  ) {
+    startComplete(async () => {
+      setOptimisticAppointments({ id: appointmentId, totalPrice: amount });
+      const result = await completeAppointment(appointmentId, amount, method);
+      if (result.error) {
+        setCompleteError(result.error);
+        setTimeout(() => setCompleteError(null), 3500);
+      }
+    });
+  }
 
   function handleDragStart(e: React.DragEvent<HTMLDivElement>, appointment: Appointment) {
     setDraggedId(appointment.id);
@@ -178,14 +209,14 @@ export function AgendaGrid({
         </Card>
       ) : (
       <Card className="overflow-hidden">
-      {dragError && (
+      {(dragError || completeError) && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-danger text-white text-xs font-medium px-3 py-2 rounded-sm shadow-lg animate-rise">
-          {dragError}
+          {dragError || completeError}
         </div>
       )}
-      {isMoving && (
+      {(isMoving || isCompleting) && (
         <div className="absolute top-2 right-2 z-10 bg-ink-800 text-paper-100 text-[11px] font-medium px-2.5 py-1.5 rounded-sm">
-          Movendo...
+          {isMoving ? "Movendo..." : "Salvando..."}
         </div>
       )}
 
@@ -248,7 +279,7 @@ export function AgendaGrid({
             ))}
 
             <div className="absolute inset-0">
-              {appointments
+              {optimisticAppointments
                 .filter((a) => a.professionalId === prof.id)
                 .map((a) => (
                   <AppointmentBlock
@@ -260,6 +291,7 @@ export function AgendaGrid({
                     isDragging={draggedId === a.id}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    onComplete={handleCompleteAppointment}
                   />
                 ))}
             </div>

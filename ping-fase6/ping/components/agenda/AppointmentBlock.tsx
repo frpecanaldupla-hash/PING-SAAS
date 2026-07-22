@@ -26,6 +26,7 @@ export function AppointmentBlock({
   isDragging,
   onDragStart,
   onDragEnd,
+  onComplete,
 }: {
   appointment: Appointment;
   client?: Pick<Client, "name">;
@@ -35,6 +36,7 @@ export function AppointmentBlock({
   isDragging?: boolean;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>, appointment: Appointment) => void;
   onDragEnd?: () => void;
+  onComplete: (appointmentId: string, amount: number, method: "pix" | "cartao" | "dinheiro") => void;
 }) {
   const { top, height } = blockPosition(appointment.startAt, appointment.endAt, dayWindow);
  const serviceNames = services
@@ -68,6 +70,7 @@ export function AppointmentBlock({
           appointmentId={appointment.id}
           suggestedAmount={appointment.totalPrice}
           onClose={() => setShowModal(false)}
+          onConfirm={onComplete}
           onDone={() => setShowModal(false)}
         />
       )}
