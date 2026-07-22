@@ -130,7 +130,7 @@ export default async function BusinessProfilePage({
             Criar minha conta
           </ButtonLink>
           <Link
-            href="/cliente/entrar"
+            href={`/cliente/entrar?negocio=${slug}`}
             className="block text-center text-sm text-paper-500 hover:text-paper-50 transition-colors"
           >
             Já sou cliente daqui — entrar

@@ -11,14 +11,21 @@ type ClientMatch = { id: string; name: string; hasPin: boolean; businessName: st
 // separada em `clients`, com sua própria senha. Por isso a busca retorna
 // uma lista, não um único cadastro: se vier mais de um, o LoginFlow mostra
 // "qual negócio?" antes de pedir a senha.
-export async function findClientsByPhone(phone: string) {
+//
+// `slug` (opcional) vem de /b/[slug] → "Já sou cliente daqui — entrar" (ver
+// LoginFlow) — quem chegou por esse link específico já deixou claro qual
+// negócio quer, então filtramos pra só aquele antes de decidir se mostra o
+// seletor. Só filtra se o telefone tiver conta NESSE negócio; se não tiver
+// (ex: link salvo de visita antiga, cadastro só existe em outro), cai de
+// volta pra lista completa em vez de travar num "não encontrado" falso.
+export async function findClientsByPhone(phone: string, slug?: string) {
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 8) return { error: "Digite um telefone válido.", matches: null };
 
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("clients")
-    .select("id, name, pin_hash, businesses ( name )")
+    .select("id, name, pin_hash, businesses ( name, slug )")
     .eq("phone", digits);
 
   if (error) return { error: "Não foi possível buscar seu cadastro.", matches: null };
@@ -31,7 +38,16 @@ export async function findClientsByPhone(phone: string) {
     };
   }
 
-  const matches: ClientMatch[] = data.map((c) => {
+  let rows = data;
+  if (slug) {
+    const scoped = rows.filter((c) => {
+      const business = Array.isArray(c.businesses) ? c.businesses[0] : c.businesses;
+      return (business as { slug?: string } | null)?.slug === slug;
+    });
+    if (scoped.length > 0) rows = scoped;
+  }
+
+  const matches: ClientMatch[] = rows.map((c) => {
     const business = Array.isArray(c.businesses) ? c.businesses[0] : c.businesses;
     return {
       id: c.id as string,

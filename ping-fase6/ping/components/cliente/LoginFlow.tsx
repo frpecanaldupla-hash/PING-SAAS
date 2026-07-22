@@ -16,7 +16,9 @@ type Step = "phone" | "choose" | "setup" | "pin";
 // Campo de PIN — o Input do design system com dígitos grandes e espaçados.
 const PIN_INPUT_CLASSES = "text-center text-2xl tracking-[0.5em]";
 
-export function LoginFlow() {
+// `slug` (opcional): veio de /b/[slug] via /cliente/entrar?negocio=slug —
+// restringe a busca a esse negócio (ver findClientsByPhone).
+export function LoginFlow({ slug }: { slug?: string } = {}) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
@@ -32,7 +34,7 @@ export function LoginFlow() {
     setLoading(true);
     setError(null);
 
-    const result = await findClientsByPhone(phone);
+    const result = await findClientsByPhone(phone, slug);
     setLoading(false);
 
     if (result.error || !result.matches) {
