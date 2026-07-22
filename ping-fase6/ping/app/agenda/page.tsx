@@ -28,7 +28,6 @@ export default async function AgendaPage({
 
   const supabase = await createClient();
   const business = await getCurrentBusiness(supabase);
-  const { data: auth } = await supabase.auth.getUser();
 
   if (!business) {
     return (
@@ -193,7 +192,7 @@ export default async function AgendaPage({
               clients={clients}
               services={services}
               businessHours={businessHours}
-              currentUserId={auth.user?.id}
+              currentUserId={business.userId}
               selectedDate={selectedDateISO}
             />
           )}

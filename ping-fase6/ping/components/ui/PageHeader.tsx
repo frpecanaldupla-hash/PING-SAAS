@@ -12,7 +12,7 @@ export function PageHeader({
   action,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   backHref?: string;
   action?: React.ReactNode;
 }) {
