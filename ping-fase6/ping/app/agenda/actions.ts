@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
-import { creditVisit } from "@/lib/checkin/creditVisit";
 import { brasiliaDayRangeISO, parseDateOnlyISO } from "@/lib/time/brasilia";
 import type { Appointment } from "@/lib/types";
 
@@ -252,34 +251,29 @@ export async function completeAppointment(
 
   const { data: appointment } = await supabase
     .from("appointments")
-    .select("id, business_id, professional_id, client_id, status")
+    .select("id, business_id, professional_id")
     .eq("id", appointmentId)
     .maybeSingle();
 
   if (!appointment) return { error: "Agendamento não encontrado." };
 
-  // A maioria dos donos nunca passa pela tela de Check-in separada — pra
-  // eles, concluir o pagamento aqui na Agenda É o check-in. Só credita
-  // pontos/visita se ainda não tiver sido creditado antes (status
-  // "checked_in" significa que já passou pelo QR ou pela busca manual).
-  const needsCredit = appointment.status !== "checked_in";
-
-  // As três operações abaixo não dependem uma da outra (só do agendamento já
+  // Concluir aqui NÃO credita pontos de fidelidade — só o check-in faz isso
+  // (ver lib/checkin/creditVisit.ts). Antes, completar sem check-in prévio
+  // também creditava, e a trava contra duplicidade só olhava um lado (se já
+  // tinha check-in, não creditava de novo); completar ANTES do check-in não
+  // tinha proteção nenhuma do lado do check-in, e o cliente acabava
+  // ganhando 2 pontos. Fonte única de verdade agora: só quem passa pelo
+  // check-in (QR, busca manual, ou o botão da Agenda) ganha ponto — de
+  // propósito, pra reforçar o uso do check-in.
+  //
+  // As duas operações abaixo não dependem uma da outra (só do agendamento já
   // buscado) — rodavam em série antes, cada uma pagando seu próprio
-  // round-trip ao Postgres. Em paralelo, o tempo total vira o da mais lenta
-  // das três em vez da soma de todas.
-  const [{ error: updateError }, { data: client }, { data: professional }] = await Promise.all([
+  // round-trip ao Postgres.
+  const [{ error: updateError }, { data: professional }] = await Promise.all([
     supabase
       .from("appointments")
       .update({ status: "completed", total_price: amount })
       .eq("id", appointmentId),
-    needsCredit
-      ? supabase
-          .from("clients")
-          .select("id, points, total_visits")
-          .eq("id", appointment.client_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
     supabase
       .from("professionals")
       .select("commission_percent")
@@ -321,12 +315,7 @@ export async function completeAppointment(
     });
   }
 
-  // creditVisit (crédito de pontos) e a inserção das transações também são
-  // independentes entre si — mais um par que não precisa esperar em série.
-  await Promise.all([
-    needsCredit && client ? creditVisit(supabase, appointment.business_id, client) : null,
-    supabase.from("transactions").insert(transactionRows),
-  ]);
+  await supabase.from("transactions").insert(transactionRows);
 
   revalidatePath("/agenda");
   revalidatePath("/financeiro");
