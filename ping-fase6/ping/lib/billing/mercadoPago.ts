@@ -28,19 +28,14 @@ export async function createSubscriptionPreference(input: {
   const plan = PLANS[input.planId];
   const preapproval = new PreApproval(getClient());
 
-  // Em sandbox (token TEST-), o Mercado Pago só autoriza pagamento quando
-  // pagador e vendedor são "contas de teste" — mandar o email real do dono
-  // do PING faz o cartão de teste ser recusado (o pagador logado no checkout
-  // é uma conta de teste, mas o payer_email declarado aqui não bate com ela).
-  // payer_email é opcional na API: em teste, se não houver um email de
-  // conta de teste configurado, omitimos o campo — o próprio checkout
-  // hospedado usa a conta que estiver logada ali, sem forçar conflito.
-  // Em produção (token APP_USR-) isso nunca entra em jogo: usa sempre o
-  // e-mail real de quem está assinando.
+  // payer_email é obrigatório na API (apesar do SDK marcar como opcional) —
+  // confirmado em teste real: omitir o campo dá 400 "payer_email is
+  // required". Em teste, se houver um email de conta de teste configurado
+  // (MERCADO_PAGO_TEST_PAYER_EMAIL), usa ele; senão cai no email real do
+  // dono do PING mesmo — não é isso que causa a recusa do cartão de teste.
   const isTestMode = process.env.MERCADO_PAGO_ACCESS_TOKEN?.startsWith("TEST-");
-  const payerEmail = isTestMode
-    ? process.env.MERCADO_PAGO_TEST_PAYER_EMAIL
-    : input.payerEmail;
+  const payerEmail =
+    (isTestMode && process.env.MERCADO_PAGO_TEST_PAYER_EMAIL) || input.payerEmail;
 
   // `status` de propósito OMITIDO: sem card_token_id (nosso caso — cartão
   // nunca passa pelo PING), é isso que faz o Mercado Pago devolver um
@@ -49,7 +44,7 @@ export async function createSubscriptionPreference(input: {
     body: {
       reason: `PING — plano ${plan.label} (${input.businessName})`,
       external_reference: input.businessId,
-      ...(payerEmail ? { payer_email: payerEmail } : {}),
+      payer_email: payerEmail,
       back_url: input.backUrl,
       auto_recurring: {
         frequency: plan.billingCycleMonths,
