@@ -2,6 +2,7 @@ import { TeamManager } from "@/components/rh/TeamManager";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { brasiliaDayRangeISO } from "@/lib/time/brasilia";
@@ -91,16 +92,12 @@ export default async function RhPage() {
   }));
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
         <PageHeader title="Equipe" subtitle={business.name} />
 
         <main className="px-5 lg:px-10 py-8 max-w-5xl mx-auto">
           <TeamManager professionals={professionals} appointments={appointments} timeOff={timeOff} />
         </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

@@ -3,9 +3,7 @@ import {
   CalendarDays, ScanLine, Scissors,
   Gift, Users, Wallet, Megaphone, Share2, Settings, ArrowRight,
 } from "lucide-react";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { Atmosphere } from "@/components/ui/Atmosphere";
+import { AppShell } from "@/components/layout/AppShell";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ModuleCard } from "@/components/shared/ModuleCard";
@@ -59,13 +57,7 @@ export default async function DashboardPage() {
   const isEmpty = clients.length === 0 && transactions.length === 0;
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10 flex min-h-screen">
-        <Sidebar businessName={businessName} />
-
-        <div className="flex-1 flex flex-col pb-20 lg:pb-0">
+    <AppShell businessName={businessName}>
         <header className="flex items-center justify-between px-5 lg:px-10 py-5 border-b border-ink-800/80">
           <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-signal-400 shadow-[0_0_10px_3px_rgba(255,91,61,0.7)]" />
@@ -158,10 +150,6 @@ export default async function DashboardPage() {
             </div>
           </section>
         </main>
-        </div>
-      </div>
-
-      <BottomNav />
-    </div>
+    </AppShell>
   );
 }

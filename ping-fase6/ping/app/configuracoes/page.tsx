@@ -7,6 +7,7 @@ import { getCurrentBusiness } from "@/lib/supabase/business";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 
 // Configurações do negócio — link/QR público (Fase 5), horário de
 // funcionamento (Fase 3) e perfil público: amenidades + localização
@@ -61,10 +62,7 @@ export default async function ConfiguracoesPage() {
   const shareUrl = `${protocol}://${host}/b/${business.slug}`;
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
         <PageHeader title="Configurações" subtitle={business.name} />
 
         <main className="px-5 lg:px-10 py-8 max-w-md mx-auto space-y-6">
@@ -81,7 +79,6 @@ export default async function ConfiguracoesPage() {
             initialHasAccessibility={profile?.has_accessibility ?? false}
           />
         </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

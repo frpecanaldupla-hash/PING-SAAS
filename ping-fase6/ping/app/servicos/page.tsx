@@ -4,6 +4,7 @@ import { ServicesManager } from "@/components/servicos/ServicesManager";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 
 // Substitui o placeholder "em construção" — este é o cardápio real do
 // negócio logado, com o catálogo de partida (semeado em
@@ -37,16 +38,12 @@ export default async function ServicosPage() {
     .order("name", { ascending: true });
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
         <PageHeader title="Serviços" subtitle={`Cardápio de ${business.name}`} />
 
         <main className="px-5 lg:px-10 py-6 max-w-3xl mx-auto">
           <ServicesManager initialServices={services ?? []} />
         </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

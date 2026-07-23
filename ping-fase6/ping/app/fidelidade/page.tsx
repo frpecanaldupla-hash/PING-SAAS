@@ -4,6 +4,7 @@ import { getCurrentBusiness } from "@/lib/supabase/business";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 
 // Substitui o placeholder "em construção" pelo cartão de carimbo real:
 // `fidelity_configs` já é criada automaticamente com o negócio (ver
@@ -51,10 +52,7 @@ export default async function FidelidadePage() {
   }));
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
       <PageHeader title="Fidelidade" subtitle={business.name} />
 
       <main className="px-5 lg:px-10 py-8 max-w-3xl mx-auto">
@@ -64,7 +62,6 @@ export default async function FidelidadePage() {
           initialClients={clients}
         />
       </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

@@ -9,6 +9,7 @@ import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 
 const PERIODS: PeriodKey[] = ["hoje", "semana", "mes", "ano"];
 
@@ -76,10 +77,7 @@ export default async function FinanceiroPage({
   const labelMethod: Record<string, string> = { pix: "PIX", cartao: "Cartão", dinheiro: "Dinheiro" };
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
       <PageHeader title="Financeiro" subtitle={business.name} />
 
       <main className="px-5 lg:px-10 py-8 max-w-3xl mx-auto space-y-6">
@@ -175,7 +173,6 @@ export default async function FinanceiroPage({
           )}
         </Card>
       </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

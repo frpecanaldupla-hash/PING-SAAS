@@ -4,6 +4,7 @@ import { ReferralList, type ReferralRow } from "@/components/indicacoes/Referral
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 
@@ -61,17 +62,13 @@ export default async function IndicacoesPage() {
   const referralLink = `${protocol}://${host}/cadastro?ref=${businessRow?.referral_code ?? ""}`;
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
         <PageHeader title="Indicações" subtitle={business.name} />
 
         <main className="px-5 lg:px-10 py-8 max-w-2xl mx-auto space-y-6">
           <ReferralShareCard link={referralLink} businessName={business.name} />
           <ReferralList referrals={referrals} />
         </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

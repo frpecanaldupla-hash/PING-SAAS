@@ -4,6 +4,7 @@ import { getCurrentBusiness } from "@/lib/supabase/business";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 
 // Substitui MOCK_CLIENTS / MOCK_FIDELITY_CONFIG pelo negócio de quem está
 // logado. A lista inicial mostra os últimos clientes que visitaram — mais
@@ -35,16 +36,12 @@ export default async function CheckinPage() {
     .limit(20);
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
         <PageHeader title="Check-in" subtitle={business.name} />
 
         <main className="px-5 lg:px-10 py-8 max-w-4xl mx-auto">
           <CheckinScanner initialClients={clientRows ?? []} />
         </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }

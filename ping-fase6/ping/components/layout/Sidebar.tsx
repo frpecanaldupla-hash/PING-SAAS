@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, CalendarDays, ScanLine, Scissors,
-  Gift, Users, Wallet, Megaphone, Share2, QrCode, Settings,
+  Gift, Users, Wallet, Megaphone, Share2, QrCode, Settings, CreditCard,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/financeiro", label: "Financeiro", icon: Wallet },
   { href: "/campanhas", label: "Campanhas", icon: Megaphone },
   { href: "/indicacoes", label: "Indicações", icon: Share2 },
+  { href: "/checkout", label: "Planos", icon: CreditCard },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 

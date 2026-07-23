@@ -4,6 +4,7 @@ import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AppShell } from "@/components/layout/AppShell";
 import { SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/billing/subscriptionGate";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
@@ -156,10 +157,7 @@ export default async function AgendaPage({
     selectedDateLabel.charAt(0).toUpperCase() + selectedDateLabel.slice(1);
 
   return (
-    <div className="relative min-h-screen bg-ink-950 text-paper-50 pb-16 overflow-x-hidden">
-      <Atmosphere />
-
-      <div className="relative z-10">
+    <AppShell businessName={business.name}>
         <PageHeader
           title="Agenda"
           subtitle={`${dateLabel} · ${business.name}`}
@@ -205,7 +203,6 @@ export default async function AgendaPage({
             />
           )}
         </main>
-      </div>
-    </div>
+    </AppShell>
   );
 }
