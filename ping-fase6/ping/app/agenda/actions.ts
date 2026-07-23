@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import { assertClientLimitOk } from "@/lib/billing/limits";
+import { getSubscriptionGate, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/billing/subscriptionGate";
 import { brasiliaDayRangeISO, parseDateOnlyISO } from "@/lib/time/brasilia";
 import type { Appointment } from "@/lib/types";
 
@@ -117,6 +118,7 @@ export async function createAppointment(input: {
   const supabase = await createClient();
   const business = await getCurrentBusiness(supabase);
   if (!business) return { error: "Negócio não encontrado." };
+  if (business.isReadOnly) return { error: SUBSCRIPTION_EXPIRED_MESSAGE };
 
   let clientId = input.clientId;
 
@@ -260,6 +262,9 @@ export async function completeAppointment(
     .maybeSingle();
 
   if (!appointment) return { error: "Agendamento não encontrado." };
+
+  const gate = await getSubscriptionGate(supabase, appointment.business_id);
+  if (gate.isReadOnly) return { error: SUBSCRIPTION_EXPIRED_MESSAGE };
 
   // Concluir aqui NÃO credita pontos de fidelidade — só o check-in faz isso
   // (ver lib/checkin/creditVisit.ts). Antes, completar sem check-in prévio

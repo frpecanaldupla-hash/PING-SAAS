@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { createClientSession, hashPin } from "@/lib/client-portal/session";
 import { assertClientLimitOk } from "@/lib/billing/limits";
+import { getSubscriptionGate, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/billing/subscriptionGate";
 
 // Cadastro de cliente direto num negócio específico, via /b/[slug] — ao
 // contrário do fluxo antigo, onde um cliente só passava a existir depois de
@@ -53,6 +54,9 @@ export async function registerClientForBusiness(input: {
       error: "Esse telefone já tem cadastro aqui. Entre pela tela de login em vez de criar uma conta nova.",
     };
   }
+
+  const gate = await getSubscriptionGate(supabase, business.id);
+  if (gate.isReadOnly) return { error: SUBSCRIPTION_EXPIRED_MESSAGE };
 
   const limit = await assertClientLimitOk(supabase, business.id);
   if (!limit.ok) return { error: limit.error };

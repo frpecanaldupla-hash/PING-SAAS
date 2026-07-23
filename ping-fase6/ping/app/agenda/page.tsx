@@ -4,6 +4,7 @@ import { Atmosphere } from "@/components/ui/Atmosphere";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/billing/subscriptionGate";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentBusiness } from "@/lib/supabase/business";
 import {
@@ -172,12 +173,19 @@ export default async function AgendaPage({
                 professionalTimeOff={professionalTimeOff}
                 initialDate={selectedDateISO}
                 autoOpen={novo === "1"}
+                isReadOnly={business.isReadOnly}
               />
             ) : undefined
           }
         />
 
         <main className="px-5 lg:px-10 py-6 max-w-6xl mx-auto">
+          {business.isReadOnly && (
+            <Card tone="gold" className="p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-paper-100">{SUBSCRIPTION_EXPIRED_MESSAGE}</p>
+              <ButtonLink href="/checkout">Assinar agora</ButtonLink>
+            </Card>
+          )}
           {professionals.length === 0 ? (
             <Card className="p-10 text-center">
               <p className="text-paper-400 text-sm">

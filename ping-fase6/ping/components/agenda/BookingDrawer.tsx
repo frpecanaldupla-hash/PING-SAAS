@@ -37,6 +37,7 @@ export function BookingDrawer({
   professionalTimeOff,
   initialDate,
   autoOpen = false,
+  isReadOnly = false,
 }: {
   services: Service[];
   professionals: Professional[];
@@ -49,8 +50,10 @@ export function BookingDrawer({
   /** "YYYY-MM-DD" do dia que a Agenda está mostrando agora — vira o dia pré-selecionado ao abrir um novo agendamento. Sem isso, cai em hoje. */
   initialDate?: string;
   autoOpen?: boolean;
+  /** Trial vencido (ver lib/billing/subscriptionGate.ts) — a trava de verdade é no servidor (createAppointment), isso aqui só evita abrir o passo a passo pra um clique que o servidor ia recusar de qualquer jeito. */
+  isReadOnly?: boolean;
 }) {
-  const [open, setOpen] = useState(autoOpen);
+  const [open, setOpen] = useState(autoOpen && !isReadOnly);
   const [step, setStep] = useState<Step>("service");
   const [professional, setProfessional] = useState<Professional>(professionals[0]);
   const [service, setService] = useState<Service | null>(null);
@@ -168,7 +171,7 @@ export function BookingDrawer({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)} disabled={isReadOnly} title={isReadOnly ? "Seu trial acabou — assine para continuar" : undefined}>
         <Plus size={16} />
         Novo agendamento
       </Button>

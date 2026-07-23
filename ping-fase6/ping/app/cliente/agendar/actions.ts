@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { getSessionClientId } from "@/lib/client-portal/session";
+import { getSubscriptionGate, SUBSCRIPTION_EXPIRED_MESSAGE } from "@/lib/billing/subscriptionGate";
 import { brasiliaDayRangeISO, parseDateOnlyISO } from "@/lib/time/brasilia";
 import type { Appointment } from "@/lib/types";
 
@@ -87,6 +88,9 @@ export async function createMyAppointment(input: {
       error: "Sua conta está temporariamente impedida de criar novos agendamentos. Fale com a barbearia.",
     };
   }
+
+  const gate = await getSubscriptionGate(supabase, client.business_id);
+  if (gate.isReadOnly) return { error: SUBSCRIPTION_EXPIRED_MESSAGE };
 
   const { data: service } = await supabase
     .from("services")

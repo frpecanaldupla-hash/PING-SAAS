@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSubscriptionGate } from "@/lib/billing/subscriptionGate";
 
 // Toda página autenticada precisa saber "qual negócio é esse usuário" antes
 // de buscar qualquer outro dado. Helper único pra não repetir esse join em
@@ -33,11 +34,17 @@ export async function getCurrentBusiness(supabase: SupabaseClient) {
   const business = Array.isArray(data.businesses) ? data.businesses[0] : data.businesses;
   if (!business) return null;
 
+  // "De carona": sem cron separado, checa aqui se o trial venceu — ver
+  // lib/billing/subscriptionGate.ts. Todo call site deste helper (pages e
+  // actions) ganha isReadOnly de graça, sem precisar buscar de novo.
+  const gate = await getSubscriptionGate(supabase, business.id as string);
+
   return {
     id: business.id as string,
     name: business.name as string,
     slug: business.slug as string,
     role: data.role as string,
     userId: user.id,
+    isReadOnly: gate.isReadOnly,
   };
 }
