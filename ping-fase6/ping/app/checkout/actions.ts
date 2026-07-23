@@ -38,7 +38,8 @@ export async function startCheckout(planId: PlanId) {
     });
     initPoint = result.initPoint;
     preapprovalId = result.preapprovalId;
-  } catch {
+  } catch (err) {
+    console.error("Falha ao criar preapproval no Mercado Pago:", err);
     return { error: "Não foi possível conectar ao Mercado Pago. Tente novamente.", initPoint: null };
   }
 
